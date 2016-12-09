@@ -1,0 +1,27 @@
+apply plugin: 'groovy'
+apply plugin: 'maven-publish'
+
+dependencies {
+  compile gradleApi()
+  compile localGroovy()
+}
+
+repositories {
+    jcenter()
+}
+
+group = "jaci.openrio.cpp.gradle"
+archivesBaseName = "GradleRIO-C"
+version = "1.0.0"
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.2.1'
+}
+
+publishing {
+    publications {
+        plugin(MavenPublication) {
+            artifact jar
+        }
+    }
+}
