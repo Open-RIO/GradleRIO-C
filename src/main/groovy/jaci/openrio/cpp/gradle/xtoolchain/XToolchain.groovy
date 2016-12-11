@@ -7,6 +7,12 @@ import org.gradle.api.*
 interface XToolchainBase {
     boolean canApply(OperatingSystem os)
     Task apply(Project project)
+    // WARNING!!!!
+    // Do not trust that GradleRIO owns the file given by get_toolchain_root.
+    // On Windows and Mac systems, it is installed under ~/.gradle/gradlerioc/toolchain
+    // by default, HOWEVER, on Linux systems, it is installed under /usr as packages
+    // are installed by apt. DO NOT remove files from this directory.
+    // For this reason, no 'clean_frc_toolchain' task is provided.
     File get_toolchain_root(Project project)
 }
 

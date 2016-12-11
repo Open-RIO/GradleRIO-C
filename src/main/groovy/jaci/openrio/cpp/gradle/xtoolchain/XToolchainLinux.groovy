@@ -9,15 +9,31 @@ class XToolchainLinux implements XToolchainBase {
 
     @Override
     Task apply(Project project) {
-        // We'll need to do some tricky stuff here to specify the install path
+        // Since we're running in apt-get, we can't specify the install location
+        // This does mean that you have to have access to install packages on the System
+        // (most commonly, sudo access)
 
         return project.tasks.create("install_frc_toolchain_linux") {
             description = "Install the FRC Toolchain on a Linux System"
+            doLast {
+                project.exec {
+                    commandLine 'apt-add-repository'
+                    args 'ppa:wpilib/toolchain'
+                }
+                project.exec {
+                    commandLine 'apt'
+                    args 'update'
+                }
+                project.exec {
+                    commandLine 'apt'
+                    args 'install', 'frc-toolchain'
+                }
+            }
         }
     }
 
     @Override
     File get_toolchain_root(Project project) {
-        return new File(XToolchain.get_toolchain_extraction_dir(project, "linux"), "frc")
+        return new File("/usr").absoluteFile
     }
 }
