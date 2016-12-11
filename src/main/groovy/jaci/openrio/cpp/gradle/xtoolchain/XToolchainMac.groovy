@@ -23,7 +23,7 @@ class XToolchainMac implements XToolchainBase {
             description = "Install the FRC Toolchain on a Mac OS X System"
             dependsOn dltask
             def targzfile = dltask.outputs.files[0]
-            def targetdir = XToolchain.get_toolchain_extraction_dir(project, "osx")
+            def targetdir = XToolchain.get_toolchain_extraction_dir("osx")
             outputs.files(targetdir)
             // Do tar / gzip | pax here
             targetdir.mkdirs()
@@ -52,7 +52,7 @@ class XToolchainMac implements XToolchainBase {
     }
 
     @Override
-    File get_toolchain_root(Project project) {
-        return new File(XToolchain.get_toolchain_extraction_dir(project, "osx"), "usr/local")
+    File get_toolchain_root() {
+        return new File(XToolchain.get_toolchain_extraction_dir("osx"), "usr/local")
     }
 }

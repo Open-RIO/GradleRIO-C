@@ -13,23 +13,20 @@ interface XToolchainBase {
     // by default, HOWEVER, on Linux systems, it is installed under /usr as packages
     // are installed by apt. DO NOT remove files from this directory.
     // For this reason, no 'clean_frc_toolchain' task is provided.
-    File get_toolchain_root(Project project)
+    File get_toolchain_root()
 }
 
 class XToolchain {
     static def url_base = "http://first.wpi.edu/FRC/roborio/toolchains/"
 
     static File download_file(Project project, String platform, String filename) {
-        def dest = new File(GradleRIO_C.getGlobalDirectory(project), "cache/${platform}")
+        def dest = new File(GradleRIO_C.getGlobalDirectory(), "cache/${platform}")
         dest.mkdirs()
         return new File(dest, filename)
     }
 
-    static File get_toolchain_extraction_dir(Project project, String platform) {
-        if (project.gradlerio_c.xtoolchain_extraction_dir != null) {
-            return new File(project.gradlerio_c.xtoolchain_extraction_dir, "toolchain/${platform}").absoluteFile
-        }
-        return new File(GradleRIO_C.getGlobalDirectory(project), "toolchain/${platform}").absoluteFile
+    static File get_toolchain_extraction_dir(String platform) {
+        return new File(GradleRIO_C.getGlobalDirectory(), "toolchain/${platform}").absoluteFile
     }
 
     static void download_xtoolchain_file(Project project, String platform, String filename) {

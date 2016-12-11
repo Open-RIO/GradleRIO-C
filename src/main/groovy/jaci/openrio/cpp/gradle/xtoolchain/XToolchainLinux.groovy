@@ -33,7 +33,7 @@ class XToolchainLinux implements XToolchainBase {
     }
 
     @Override
-    File get_toolchain_root(Project project) {
+    File get_toolchain_root() {
         return new File("/usr").absoluteFile
     }
 }

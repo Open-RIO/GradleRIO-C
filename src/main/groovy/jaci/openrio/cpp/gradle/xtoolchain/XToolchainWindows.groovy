@@ -23,7 +23,7 @@ class XToolchainWindows implements XToolchainBase {
             description = "Install the FRC Toolchain on a Windows System"
             dependsOn dltask
             def msifile = dltask.outputs.files[0]
-            def targetdir = XToolchain.get_toolchain_extraction_dir(project, "windows")
+            def targetdir = XToolchain.get_toolchain_extraction_dir("windows")
             outputs.files(targetdir)
             doLast {
                 project.exec {
@@ -35,7 +35,7 @@ class XToolchainWindows implements XToolchainBase {
     }
 
     @Override
-    File get_toolchain_root(Project project) {
-        return new File(XToolchain.get_toolchain_extraction_dir(project, "windows"), "frc")
+    File get_toolchain_root() {
+        return new File(XToolchain.get_toolchain_extraction_dir("windows"), "frc")
     }
 }
