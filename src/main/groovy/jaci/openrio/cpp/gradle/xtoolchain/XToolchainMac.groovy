@@ -53,6 +53,6 @@ class XToolchainMac implements XToolchainBase {
 
     @Override
     File get_toolchain_root(Project project) {
-        return new File(XToolchain.get_toolchain_extraction_dir(project, "osx"), "frc")
+        return new File(XToolchain.get_toolchain_extraction_dir(project, "osx"), "usr/local")
     }
 }
