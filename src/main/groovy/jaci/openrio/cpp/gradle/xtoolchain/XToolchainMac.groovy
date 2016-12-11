@@ -26,16 +26,26 @@ class XToolchainMac implements XToolchainBase {
             def targetdir = XToolchain.get_toolchain_extraction_dir(project, "osx")
             outputs.files(targetdir)
             // Do tar / gzip | pax here
+            targetdir.mkdirs()
             doLast {
                 project.exec {
                     commandLine 'tar'
                     workingDir targetdir
                     args '-xzf', targzfile.absolutePath
                 }
+                def out_stream = new ByteArrayOutputStream()
                 project.exec {
                     commandLine 'gzip'
                     workingDir targetdir
-                    args '-cd', "FRC ARM Toolchain.pkg/Contents/Archive.pax.gz", "|", "pax", "-r"
+                    standardOutput = out_stream
+                    args '-cd', "FRC ARM Toolchain.pkg/Contents/Archive.pax.gz"
+                }
+                def in_stream = new ByteArrayInputStream(out_stream.buf)
+                project.exec {
+                    commandLine 'pax'
+                    workingDir targetdir
+                    standardInput = in_stream
+                    args '-r'
                 }
             }
         }
