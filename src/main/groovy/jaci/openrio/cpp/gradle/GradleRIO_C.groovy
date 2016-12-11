@@ -9,13 +9,29 @@ import org.gradle.language.base.plugins.ComponentModelBasePlugin;
 import org.gradle.platform.base.*;
 import org.gradle.model.*;
 
+import jaci.openrio.cpp.gradle.xtoolchain.*;
+import org.gradle.internal.os.OperatingSystem;
+
 import jaci.openrio.cpp.gradle.resource.*
 
 class GradleRIO_C implements Plugin<Project> {
 
+    def xtoolchains = new ArrayList<XToolchainBase>()
+
     void apply(Project project) {
         project.getPluginManager().apply(ComponentModelBasePlugin.class);
         project.extensions.create("gradlerio_c", GradleRIOCExtensions)
+
+        xtoolchains += [new XToolchainWindows(), new XToolchainMac(), new XToolchainLinux()]
+
+        def xtoolchain_install_task = project.tasks.create("install_frc_toolchain") {
+            description = "Install the FRC RoboRIO arm-frc-linux-gnueabi Toolchain"
+        }
+
+        xtoolchains.each {
+            if (it.canApply(OperatingSystem.current()))
+                xtoolchain_install_task.dependsOn it.apply(project)
+        }
     }
 
     static class ToastRules extends RuleSource {
