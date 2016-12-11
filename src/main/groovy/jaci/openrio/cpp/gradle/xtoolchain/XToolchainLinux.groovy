@@ -15,4 +15,9 @@ class XToolchainLinux implements XToolchainBase {
             description = "Install the FRC Toolchain on a Linux System"
         }
     }
+
+    @Override
+    File get_toolchain_root(Project project) {
+        return new File(XToolchain.get_toolchain_extraction_dir(project, "linux"), "frc")
+    }
 }

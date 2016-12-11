@@ -13,9 +13,9 @@ class XToolchainMac implements XToolchainBase {
     Task apply(Project project) {
         def dltask = project.tasks.create("download_frc_toolchain_osx") {
             description = "Download the FRC Toolchain"
-            outputs.files(XToolchainDownloader.download_file(project, "osx", filename))
+            outputs.files(XToolchain.download_file(project, "osx", filename))
             doLast {
-                XToolchainDownloader.download_xtoolchain_file(project, "osx", filename)
+                XToolchain.download_xtoolchain_file(project, "osx", filename)
             }
         }
 
@@ -23,7 +23,26 @@ class XToolchainMac implements XToolchainBase {
             description = "Install the FRC Toolchain on a Mac OS X System"
             dependsOn dltask
             def targzfile = dltask.outputs.files[0]
+            def targetdir = XToolchain.get_toolchain_extraction_dir(project, "osx")
+            outputs.files(targetdir)
             // Do tar / gzip | pax here
+            doLast {
+                project.exec {
+                    commandLine 'tar'
+                    workingDir targetdir
+                    args '-xzf', targzfile.absolutePath
+                }
+                project.exec {
+                    commandLine 'gzip'
+                    workingDir targetdir
+                    args '-cd', "FRC ARM Toolchain.pkg/Contents/Archive.pax.gz", "|", "pax", "-r"
+                }
+            }
         }
+    }
+
+    @Override
+    File get_toolchain_root(Project project) {
+        return new File(XToolchain.get_toolchain_extraction_dir(project, "osx"), "frc")
     }
 }

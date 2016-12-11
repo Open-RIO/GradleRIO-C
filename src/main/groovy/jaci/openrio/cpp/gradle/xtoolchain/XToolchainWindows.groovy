@@ -13,9 +13,9 @@ class XToolchainWindows implements XToolchainBase {
     Task apply(Project project) {
         def dltask = project.tasks.create("download_frc_toolchain_winblows") {
             description = "Download the FRC Toolchain"
-            outputs.files(XToolchainDownloader.download_file(project, "windows", filename))
+            outputs.files(XToolchain.download_file(project, "windows", filename))
             doLast {
-                XToolchainDownloader.download_xtoolchain_file(project, "windows", filename)
+                XToolchain.download_xtoolchain_file(project, "windows", filename)
             }
         }
 
@@ -23,7 +23,19 @@ class XToolchainWindows implements XToolchainBase {
             description = "Install the FRC Toolchain on a Windows System"
             dependsOn dltask
             def msifile = dltask.outputs.files[0]
-            // Do msiexec here
+            def targetdir = XToolchain.get_toolchain_extraction_dir(project, "windows")
+            outputs.files(targetdir)
+            doLast {
+                project.exec {
+                    commandLine 'msiexec'
+                    args '/a', msifile.absolutePath, '/qb', "TARGETDIR=${targetdir.absoluteFile}"
+                }
+            }
         }
+    }
+
+    @Override
+    File get_toolchain_root(Project project) {
+        return new File(XToolchain.get_toolchain_extraction_dir(project, "windows"), "frc")
     }
 }

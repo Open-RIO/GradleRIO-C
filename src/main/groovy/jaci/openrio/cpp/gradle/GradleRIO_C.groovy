@@ -16,21 +16,34 @@ import jaci.openrio.cpp.gradle.resource.*
 
 class GradleRIO_C implements Plugin<Project> {
 
-    def xtoolchains = new ArrayList<XToolchainBase>()
+    static def xtoolchains = new ArrayList<XToolchainBase>()
 
     void apply(Project project) {
         project.getPluginManager().apply(ComponentModelBasePlugin.class);
-        project.extensions.create("gradlerio_c", GradleRIOCExtensions)
+        project.with {
+            extensions.create("gradlerio_c", GradleRIOCExtensions)
 
-        xtoolchains += [new XToolchainWindows(), new XToolchainMac(), new XToolchainLinux()]
+            xtoolchains += [new XToolchainWindows(), new XToolchainMac(), new XToolchainLinux()]
 
-        def xtoolchain_install_task = project.tasks.create("install_frc_toolchain") {
-            description = "Install the FRC RoboRIO arm-frc-linux-gnueabi Toolchain"
+            def xtoolchain_install_task = tasks.create("install_frc_toolchain") {
+                description = "Install the FRC RoboRIO arm-frc-linux-gnueabi Toolchain"
+            }
+
+            // Toolchain Extractions depend on the gradlerio_c.xtoolchain_extraction_dir extension
+            // property, so we need to evaluate the buildscript first.
+            afterEvaluate {
+                xtoolchain_install_task.dependsOn getActiveToolchain().apply(it)
+            }
         }
+    }
 
-        xtoolchains.each {
-            if (it.canApply(OperatingSystem.current()))
-                xtoolchain_install_task.dependsOn it.apply(project)
+    static File getGlobalDirectory(Project project) {
+        return new File(project.getGradle().getGradleUserHomeDir(), "gradlerioc")
+    }
+
+    static XToolchainBase getActiveToolchain() {
+        xtoolchains.find {
+            it.canApply(OperatingSystem.current())
         }
     }
 
