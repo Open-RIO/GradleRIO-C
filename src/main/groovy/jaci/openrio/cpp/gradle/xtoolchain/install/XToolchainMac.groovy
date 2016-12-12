@@ -1,4 +1,6 @@
-package jaci.openrio.cpp.gradle.xtoolchain
+package jaci.openrio.cpp.gradle.xtoolchain.install
+
+import jaci.openrio.cpp.gradle.xtoolchain.*
 
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.api.*

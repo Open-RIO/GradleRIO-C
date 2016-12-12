@@ -1,8 +1,21 @@
 package jaci.openrio.cpp.gradle.xtoolchain
 
 import jaci.openrio.cpp.gradle.GradleRIO_C
+import jaci.openrio.cpp.gradle.xtoolchain.install.*
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.api.*
+import org.gradle.model.*
+import org.gradle.platform.base.*
+
+import org.gradle.api.internal.file.fileResolver
+import org.gradle.process.internal.ExecActionFactory
+import org.gradle.internal.reflect.Instantiator
+import org.gradle.internal.service.ServiceRegistry
+import org.gradle.nativeplatform.toolchain.*
+import org.gradle.nativeplatform.platform.NativePlatform
+import org.gradle.nativeplatform.plugins.NativeComponentPlugin
+import org.gradle.internal.operations.BuildOperationProcessor
+import org.gradle.nativeplatform.toolchain.internal.gcc.version.CompilerMetaDataProviderFactory
 
 interface XToolchainBase {
     boolean canApply(OperatingSystem os)
@@ -14,6 +27,60 @@ interface XToolchainBase {
     // are installed by apt. DO NOT remove files from this directory.
     // For this reason, no 'clean_frc_toolchain' task is provided.
     File get_toolchain_root()
+}
+
+class XToolchainPlugin implements Plugin<Project> {
+    static def xtoolchains = new ArrayList<XToolchainBase>()
+
+    void apply(Project project) {
+        project.getPluginManager().apply(NativeComponentPlugin.class)
+        project.with {
+            xtoolchains += [new XToolchainWindows(), new XToolchainMac(), new XToolchainLinux()]
+
+            def xtoolchain_install_task = tasks.create("install_frc_toolchain") {
+                description = "Install the FRC RoboRIO arm-frc-linux-gnueabi Toolchain"
+            }
+
+            xtoolchain_install_task.dependsOn getActiveToolchain().apply(it)
+        }
+    }
+
+    static XToolchainBase getActiveToolchain() {
+        xtoolchains.find {
+            it.canApply(OperatingSystem.current())
+        }
+    }
+
+    static class Rules extends RuleSource {
+        // TODO Platform Compilers for ARM (Rasp Pi, Pine64)?
+        @Mutate
+        void addPlatform(PlatformContainer platforms) {
+            // RoboRIO ARM Cross Compilation (XToolchain GCC)
+            NativePlatform arm = platforms.maybeCreate("roborio-arm", NativePlatform.class)
+            arm.architecture("arm")
+            arm.operatingSystem("linux")
+
+            // Cross-Platform 32(x86) and 64(x86_64) targets
+            NativePlatform x86 = platforms.maybeCreate("any-32", NativePlatform.class)
+            x86.architecture("x86")
+
+            NativePlatform x64 = platforms.maybeCreate("any-64", NativePlatform.class)
+            x64.architecture("x86_64")
+        }
+
+        @Defaults
+        void addToolchain(NativeToolChainRegistry toolChainRegistry, ServiceRegistry serviceRegistry) {
+            def fileResolver = serviceRegistry.get(FileResolver.class);
+            def execActionFactory = serviceRegistry.get(ExecActionFactory.class);
+            def instantiator = serviceRegistry.get(Instantiator.class);
+            def buildOperationProcessor = serviceRegistry.get(BuildOperationProcessor.class);
+            def metaDataProviderFactory = serviceRegistry.get(CompilerMetaDataProviderFactory.class);
+            toolChainRegistry.registerFactory(XToolchainGCC.class, { String name ->
+                return instantiator.newInstance(XToolchainGCC.class, instantiator, name, buildOperationProcessor, OperatingSystem.LINUX, fileResolver, execActionFactory, metaDataProviderFactory)
+            })
+            toolChainRegistry.registerDefaultToolChain("roborioGcc", XToolchainGCC.class)
+        }
+    }
 }
 
 class XToolchain {

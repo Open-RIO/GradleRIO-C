@@ -3,20 +3,9 @@ package jaci.openrio.cpp.gradle
 import org.gradle.api.*;
 import groovy.util.*;
 
-import org.gradle.internal.service.ServiceRegistry;
-import org.gradle.language.base.internal.registry.LanguageTransformContainer;
 import org.gradle.language.base.plugins.ComponentModelBasePlugin;
-import org.gradle.platform.base.*;
 import org.gradle.model.*;
-
-import org.gradle.api.internal.file.FileResolver;
-import org.gradle.process.internal.ExecActionFactory;
-import org.gradle.internal.reflect.Instantiator;
-import org.gradle.nativeplatform.toolchain.*;
-import org.gradle.nativeplatform.platform.NativePlatform;
-import org.gradle.nativeplatform.plugins.NativeComponentPlugin;
-import org.gradle.internal.operations.BuildOperationProcessor;
-import org.gradle.nativeplatform.toolchain.internal.gcc.version.CompilerMetaDataProviderFactory;
+import org.gradle.platform.base.*;
 
 import jaci.openrio.cpp.gradle.xtoolchain.*;
 import org.gradle.internal.os.OperatingSystem;
@@ -25,21 +14,11 @@ import jaci.openrio.cpp.gradle.resource.*
 
 class GradleRIO_C implements Plugin<Project> {
 
-    static def xtoolchains = new ArrayList<XToolchainBase>()
-
     void apply(Project project) {
-        project.getPluginManager().apply(NativeComponentPlugin.class)
         project.getPluginManager().apply(ComponentModelBasePlugin.class)
+        project.getPluginManager().apply(XToolchainPlugin.class)
         project.with {
             extensions.create("gradlerio_c", GradleRIOCExtensions)
-
-            xtoolchains += [new XToolchainWindows(), new XToolchainMac(), new XToolchainLinux()]
-
-            def xtoolchain_install_task = tasks.create("install_frc_toolchain") {
-                description = "Install the FRC RoboRIO arm-frc-linux-gnueabi Toolchain"
-            }
-
-            xtoolchain_install_task.dependsOn getActiveToolchain().apply(it)
         }
     }
 
@@ -48,34 +27,7 @@ class GradleRIO_C implements Plugin<Project> {
         return new File("${System.getProperty('user.home')}/.gradle", "gradlerioc")
     }
 
-    static XToolchainBase getActiveToolchain() {
-        xtoolchains.find {
-            it.canApply(OperatingSystem.current())
-        }
-    }
-
     static class ToastRules extends RuleSource {
-        @Mutate
-        void addPlatform(PlatformContainer platforms) {
-            NativePlatform platform = platforms.maybeCreate("roborio-arm", NativePlatform.class)
-            platform.architecture("arm")
-            platform.operatingSystem("linux")
-        }
-
-        @Defaults
-        void addToolchain(NativeToolChainRegistry toolChainRegistry, ServiceRegistry serviceRegistry) {
-            def fileResolver = serviceRegistry.get(FileResolver.class);
-            def execActionFactory = serviceRegistry.get(ExecActionFactory.class);
-            def instantiator = serviceRegistry.get(Instantiator.class);
-            def buildOperationProcessor = serviceRegistry.get(BuildOperationProcessor.class);
-            def metaDataProviderFactory = serviceRegistry.get(CompilerMetaDataProviderFactory.class);
-            toolChainRegistry.registerFactory(XToolchainGCC.class, { String name ->
-                return instantiator.newInstance(XToolchainGCC.class, instantiator, name, buildOperationProcessor, OperatingSystem.LINUX, fileResolver, execActionFactory, metaDataProviderFactory)
-            })
-            toolChainRegistry.registerDefaultToolChain("roborioGcc", XToolchainGCC.class)
-
-        }
-
         @ComponentType
         void registerComponent(TypeBuilder<ToastResourceSpec> builder) { }
 
