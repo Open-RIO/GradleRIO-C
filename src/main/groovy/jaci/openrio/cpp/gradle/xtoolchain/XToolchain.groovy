@@ -7,7 +7,7 @@ import org.gradle.api.*
 import org.gradle.model.*
 import org.gradle.platform.base.*
 
-import org.gradle.api.internal.file.fileResolver
+import org.gradle.api.internal.file.FileResolver
 import org.gradle.process.internal.ExecActionFactory
 import org.gradle.internal.reflect.Instantiator
 import org.gradle.internal.service.ServiceRegistry
@@ -79,6 +79,37 @@ class XToolchainPlugin implements Plugin<Project> {
                 return instantiator.newInstance(XToolchainGCC.class, instantiator, name, buildOperationProcessor, OperatingSystem.LINUX, fileResolver, execActionFactory, metaDataProviderFactory)
             })
             toolChainRegistry.registerDefaultToolChain("roborioGcc", XToolchainGCC.class)
+        }
+
+        @Mutate
+        void configureToolchains(NativeToolChainRegistry toolChains) {
+            toolChains.withType(VisualCpp) {
+                if (OperatingSystem.current().isWindows()) {
+                    // Taken from nt-core, fixes VS2015 compilation issues 
+                    // Workaround for VS2015 adapted from https://github.com/couchbase/couchbase-lite-java-native/issues/23
+                    def VS_2015_INCLUDE_DIR = "C:/Program Files (x86)/Windows Kits/10/Include/10.0.10240.0/ucrt"
+                    def VS_2015_LIB_DIR = "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.10240.0/ucrt"
+                    def VS_2015_INSTALL_DIR = 'C:/Program Files (x86)/Microsoft Visual Studio 14.0'
+                    def vsInstallDir = new File(VS_2015_INSTALL_DIR)
+
+                    eachPlatform {
+                        cppCompiler.withArguments { args ->
+                            if (new File(VS_2015_INCLUDE_DIR).exists()) {
+                                args << "/I$VS_2015_INCLUDE_DIR"
+                            }
+                        }
+                        linker.withArguments { args ->
+                            if (new File(VS_2015_LIB_DIR).exists()) {
+                                if (platform.architecture.name == 'x86') {
+                                    args << "/LIBPATH:$VS_2015_LIB_DIR/x86"
+                                } else {
+                                    args << "/LIBPATH:$VS_2015_LIB_DIR/x64"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
