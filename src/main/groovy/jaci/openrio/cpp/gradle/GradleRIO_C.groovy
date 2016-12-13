@@ -7,7 +7,8 @@ import org.gradle.language.base.plugins.ComponentModelBasePlugin;
 import org.gradle.model.*;
 import org.gradle.platform.base.*;
 
-import jaci.openrio.cpp.gradle.xtoolchain.*;
+import jaci.openrio.cpp.gradle.xtoolchain.XToolchainPlugin;
+import jaci.openrio.cpp.gradle.wpi.WPIPlugin;
 import org.gradle.internal.os.OperatingSystem;
 
 import jaci.openrio.cpp.gradle.resource.*
@@ -17,6 +18,7 @@ class GradleRIO_C implements Plugin<Project> {
     void apply(Project project) {
         project.getPluginManager().apply(ComponentModelBasePlugin.class)
         project.getPluginManager().apply(XToolchainPlugin.class)
+        project.getPluginManager().apply(WPIPlugin.class)
         project.with {
             extensions.create("gradlerio_c", GradleRIOCExtensions)
         }

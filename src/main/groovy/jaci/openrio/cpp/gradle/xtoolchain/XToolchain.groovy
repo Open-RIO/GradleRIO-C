@@ -6,6 +6,7 @@ import org.gradle.internal.os.OperatingSystem
 import org.gradle.api.*
 import org.gradle.model.*
 import org.gradle.platform.base.*
+import org.gradle.language.base.plugins.ComponentModelBasePlugin
 
 import org.gradle.api.internal.file.FileResolver
 import org.gradle.process.internal.ExecActionFactory
@@ -34,6 +35,7 @@ class XToolchainPlugin implements Plugin<Project> {
 
     void apply(Project project) {
         project.getPluginManager().apply(NativeComponentPlugin.class)
+        project.getPluginManager().apply(ComponentModelBasePlugin.class)
         project.with {
             xtoolchains += [new XToolchainWindows(), new XToolchainMac(), new XToolchainLinux()]
 
@@ -52,6 +54,15 @@ class XToolchainPlugin implements Plugin<Project> {
     }
 
     static class Rules extends RuleSource {
+        @Model("cpp")
+        void createCppModel(CppSpec spec) {}
+
+        @Defaults 
+        void defaultCppModel(CppSpec spec) {
+            spec.setCppVersion("c++1y") // C++1Y = (roughly) C++14. The RoboRIO supports C++1Y (not C++14 ISO standard)
+            spec.setDebugInfo(true) // This adds -g (gcc) and /Zi,/FS,/DEBUG (msvc). This is used for debugging and symbol info in a crash
+        }
+
         // TODO Platform Compilers for ARM (Rasp Pi, Pine64)?
         @Mutate
         void addPlatform(PlatformContainer platforms) {
@@ -82,30 +93,51 @@ class XToolchainPlugin implements Plugin<Project> {
         }
 
         @Mutate
-        void configureToolchains(NativeToolChainRegistry toolChains) {
-            toolChains.withType(VisualCpp) {
-                if (OperatingSystem.current().isWindows()) {
-                    // Taken from nt-core, fixes VS2015 compilation issues 
-                    // Workaround for VS2015 adapted from https://github.com/couchbase/couchbase-lite-java-native/issues/23
-                    def VS_2015_INCLUDE_DIR = "C:/Program Files (x86)/Windows Kits/10/Include/10.0.10240.0/ucrt"
-                    def VS_2015_LIB_DIR = "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.10240.0/ucrt"
-                    def VS_2015_INSTALL_DIR = 'C:/Program Files (x86)/Microsoft Visual Studio 14.0'
-                    def vsInstallDir = new File(VS_2015_INSTALL_DIR)
+        void configureToolchains(NativeToolChainRegistry toolChains, @Path("cpp") CppSpec cppSpec) {
+            toolChains.all {
+                if (it in VisualCpp) {
+                    if (OperatingSystem.current().isWindows()) {
+                        // Taken from nt-core, fixes VS2015 compilation issues 
+                        // Workaround for VS2015 adapted from https://github.com/couchbase/couchbase-lite-java-native/issues/23
+                        def VS_2015_INCLUDE_DIR = "C:/Program Files (x86)/Windows Kits/10/Include/10.0.10240.0/ucrt"
+                        def VS_2015_LIB_DIR = "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.10240.0/ucrt"
+                        def VS_2015_INSTALL_DIR = 'C:/Program Files (x86)/Microsoft Visual Studio 14.0'
+                        def vsInstallDir = new File(VS_2015_INSTALL_DIR)
 
-                    eachPlatform {
-                        cppCompiler.withArguments { args ->
-                            if (new File(VS_2015_INCLUDE_DIR).exists()) {
-                                args << "/I$VS_2015_INCLUDE_DIR"
-                            }
-                        }
-                        linker.withArguments { args ->
-                            if (new File(VS_2015_LIB_DIR).exists()) {
-                                if (platform.architecture.name == 'x86') {
-                                    args << "/LIBPATH:$VS_2015_LIB_DIR/x86"
-                                } else {
-                                    args << "/LIBPATH:$VS_2015_LIB_DIR/x64"
+                        eachPlatform {
+                            cppCompiler.withArguments { args ->
+                                if (cppSpec.getDebugInfo()) {
+                                    args << "/Zi"
+                                    args << "/FS"
+                                }
+                                args << "/EHsc"
+                                if (new File(VS_2015_INCLUDE_DIR).exists()) {
+                                    args << "/I$VS_2015_INCLUDE_DIR"
                                 }
                             }
+                            linker.withArguments { args ->
+                                if (cppSpec.getDebugInfo()) args << "/DEBUG"
+                                if (new File(VS_2015_LIB_DIR).exists()) {
+                                    if (platform.architecture.name == 'x86') {
+                                        args << "/LIBPATH:$VS_2015_LIB_DIR/x86"
+                                    } else {
+                                        args << "/LIBPATH:$VS_2015_LIB_DIR/x64"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    eachPlatform {
+                        cppCompiler.withArguments { args ->
+                            args << "-std=${cppSpec.getCppVersion()}"
+                            if (cppSpec.getDebugInfo()) args << "-g"
+                        }
+                        linker.withArguments { args ->
+                            args << "-ldl"
+                            args << "-lrt"
+                            args << "-lm"
+                            // For a Toast project we would need -rdynamic in here
                         }
                     }
                 }

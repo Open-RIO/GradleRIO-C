@@ -23,7 +23,9 @@ public class XToolchainGCC extends GccToolChain {
                 String gccPrefix = "arm-frc-linux-gnueabi-";
                 String gccSuffix = OperatingSystem.current().isWindows() ? ".exe" : ""
                 target.cCompiler.executable =           gccPrefix + "gcc" + gccSuffix;
+                target.cCompiler.withArguments      { a -> a << "-DROBORIO" }   // Define the 'ROBORIO' macro
                 target.cppCompiler.executable =         gccPrefix + "g++" + gccSuffix;
+                target.cppCompiler.withArguments    { a -> a << "-DROBORIO" }   // Define the 'ROBORIO' macro
                 target.linker.executable =              gccPrefix + "g++" + gccSuffix;
                 target.assembler.executable =           gccPrefix + "as"  + gccSuffix;
                 target.staticLibArchiver.executable =   gccPrefix + "ar"  + gccSuffix;
