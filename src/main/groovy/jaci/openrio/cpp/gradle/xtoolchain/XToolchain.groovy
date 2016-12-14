@@ -40,6 +40,7 @@ class XToolchainPlugin implements Plugin<Project> {
             xtoolchains += [new XToolchainWindows(), new XToolchainMac(), new XToolchainLinux()]
 
             def xtoolchain_install_task = tasks.create("install_frc_toolchain") {
+                group = "GradleRIO"
                 description = "Install the FRC RoboRIO arm-frc-linux-gnueabi Toolchain"
             }
 

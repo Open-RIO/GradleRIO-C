@@ -24,8 +24,8 @@ class WPIPlugin implements Plugin<Project> {
 
     void apply(Project project) {
         project.getPluginManager().apply(ComponentModelBasePlugin.class)
-        project.extensions.create('projectWrapper', ProjectWrapper)
-        project.projectWrapper.project = project
+        project.extensions.create('wpi_project_wrapper', ProjectWrapper)
+        project.wpi_project_wrapper.project = project
     }
 
     static class Rules extends RuleSource {
@@ -66,6 +66,7 @@ class WPIPlugin implements Plugin<Project> {
 
         // We can't add a Library Search Path in PrebuiltLibraries, so we have to do it as an additional step to 
         // tell the linker where WPILib's other libraries (HAL, NTCore etc) are
+        // TODO: Move this to the project space as the WPI model is project-wide
         @BinaryTasks
         void addWpiGitTasks(ModelMap<Task> tasks, final NativeBinarySpec binary, final ExtensionContainer extensions, @Path("wpi") WpiSpec wpiSpec) {
             def link_wpi = false
