@@ -1,0 +1,14 @@
+model {
+    components {
+        my_library(NativeLibrarySpec) {
+            // This library can build on any platform
+            targetPlatform "roborio-arm"
+            targetPlatform "any-32"
+            targetPlatform "any-64"
+            sources.cpp {
+                source.srcDirs "src"
+                exportedHeaders.srcDirs "include"
+            }
+        }
+    }
+}

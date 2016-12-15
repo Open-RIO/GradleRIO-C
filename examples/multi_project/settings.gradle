@@ -1,0 +1,2 @@
+// Include the following 'subprojects'
+include 'my_library', 'my_program'

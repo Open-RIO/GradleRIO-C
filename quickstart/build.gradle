@@ -1,0 +1,20 @@
+plugins {
+    id "jaci.openrio.cpp.gradle.GradleRIO-C" version "1.0.1"
+}
+apply plugin: "cpp"
+
+model {
+    frc {
+        team = "5333"
+    }
+    components {
+        my_program(FRCUserProgram) {                        // This is your program, my_program
+            targetPlatform "roborio-arm"                    // Build on the RoboRIO
+            sources.cpp {
+                source.srcDirs "src"                        // Where your .cpp files are stored
+                exportedHeaders.srcDirs "include"           // Where your .h / .hpp files are stored
+                lib library: "wpilib", linkage: "static"    // Compile with WPILib
+            }
+        }
+    }
+}

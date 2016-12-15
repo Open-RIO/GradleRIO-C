@@ -108,7 +108,7 @@ class DeployPlugin implements Plugin<Project> {
                 doLast {
                     projectWrapper.project.deploy_ssh.run {
                         session(host: spec.getActiveRioAddress().address, user: 'lvuser', timeoutSec: spec.getDeployTimeout(), knownHosts: AllowAnyHosts.instance) {
-                            execute ". /etc/profile.d/natinst-path.sh; /usr/local/frc/bin/frcKillRobot.sh -t -r"
+                            execute ". /etc/profile.d/natinst-path.sh; /usr/local/frc/bin/frcKillRobot.sh -t -r", ignoreError: true
                         }
                     }
                 }
@@ -169,7 +169,7 @@ class DeployPlugin implements Plugin<Project> {
                                 if (file.exists())
                                     projectWrapper.project.deploy_ssh.run {
                                         session(host: spec.getActiveRioAddress().address, user: 'lvuser', timeoutSec: spec.getDeployTimeout(), knownHosts: AllowAnyHosts.instance) {
-                                            execute ". /etc/profile.d/natinst-path.sh; /usr/local/frc/bin/frcKillRobot.sh -t" // Just in case
+                                            execute ". /etc/profile.d/natinst-path.sh; /usr/local/frc/bin/frcKillRobot.sh -t", ignoreError: true // Just in case
                                             execute "mkdir -p ${spec.getDeployDirectory()}"
                                             put from: file, into: spec.getDeployDirectory()
                                             execute "chmod +x ${spec.getDeployDirectory()}/${file.name}"

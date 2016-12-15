@@ -1,0 +1,36 @@
+plugins {
+    id "jaci.openrio.cpp.gradle.GradleRIO-C" version "1.0.1"
+}
+
+apply plugin: "cpp"
+
+model {
+    frc {
+        team = "5333"
+    }
+
+    components {
+        // Change FRCUserProgram to NativeLibrarySpec to build both shared and static libraries
+        my_program(NativeLibrarySpec) {
+            // Compile for the RoboRIO like usual
+            targetPlatform "roborio-arm"
+            // Also compile for Any Platform, 32 and 64 bit.
+            // Platform-Specifics are okay as well, like windows_x86, and linux_x86
+            // Gradle will only compile for platforms it can find. Run `gradlew components` for
+            // a breakdown of what is being built, and with what toolchain
+            targetPlatform "any-32"
+            targetPlatform "any-64"
+            sources.cpp {
+                source {
+                    srcDirs "src"               // Library .cpp files
+                }
+                exportedHeaders {
+                    srcDirs "include"           // Library .h / .hpp files
+                }
+                // Optional: Your library can either depend on WPILib, or not.
+                // Since this is a cross-platform library, we're not going to
+                // lib library: "wpilib", linkage: "static"
+            }
+        }
+    }
+}

@@ -1,0 +1,31 @@
+plugins {
+    id "jaci.openrio.cpp.gradle.GradleRIO-C" version "1.0.1"
+}
+
+apply plugin: "cpp"
+
+model {
+    frc {
+        team = "5333"
+    }
+
+    wpi {
+        git = true                          // Set to true to use Git instead of the local WPILib (github/wpilibsuite/allwpilib)
+        gitVersion = "3784b66"              // Commit, Branch or Tag to checkout before building
+    }
+
+    components {
+        my_program(FRCUserProgram) {
+            targetPlatform "roborio-arm"        // Build using the RoboRIO Toolchain
+            sources.cpp {
+                source {
+                    srcDirs "src"               // Where your .cpp files are stored
+                }
+                exportedHeaders {
+                    srcDirs "include"           // Where your .h/.hpp files are stored
+                }
+                lib library: "wpilib", linkage: "static"    // Compile with WPILib
+            }
+        }
+    }
+}

@@ -2,7 +2,7 @@
 Managing FRC C++ Projects, the Gradle way. Build, Develop and Deploy your FRC Code on any system, without the need for eclipse or administrative priviledges.
 
 Unlike the standard FRC Development Tools, GradleRIO-C can be run on any system, even if they're locked down (like school PCs). This includes installing
-the C++ toolchain (with the exception of debian linux, which requires sudo and/or `apt` access)
+the C++ toolchain (with the exception of debian linux, which requires sudo and/or `apt` access). The only requirement is the Java Virtual Machine to run Gradle itself, a Command Line, and an Internet Connection.
 
 ## Commands
 _Replace `gradlew` with `./gradlew` if you're on Mac or Linux_  
@@ -20,7 +20,11 @@ GradleRIO will deploy to the RoboRIO through the following preference list:
 3: Static IP (`10.TE.AM.20`)   
 The addresses for mDNS and Static IP can be changed in the buildscript.
 
-## Implementation
+## Quick Start
+Download the [Quick Start Sample Project](Quickstart.zip) and edit it to your own accord.
+You can get examples [here](examples/). Feel free to download them into your own project.
+
+## Custom Implementation
 Put the following at the top of your `build.gradle` file
 ```
 plugins {
@@ -33,7 +37,9 @@ apply plugin: "cpp"
 You can copy-paste this [install instruction from here](https://plugins.gradle.org/plugin/jaci.openrio.cpp.gradle.GradleRIO-C)
 
 You can now setup your project just like any other Gradle C++ project.  
-Example (barebones) `build.gradle` below (you can see more [here](samples/))
+You can get examples [here](examples/). Feel free to download them into your own project.
+
+Example (barebones) `build.gradle` below.
 
 ```gradle
 plugins {

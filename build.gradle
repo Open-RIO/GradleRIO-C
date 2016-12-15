@@ -20,7 +20,7 @@ repositories {
 
 group = "jaci.openrio.cpp.gradle"
 archivesBaseName = "GradleRIO-C"
-version = "1.0.1"
+version = "1.0.2"
 
 pluginBundle {
     website = 'https://github.com/Open-RIO/GradleRIO-C'
@@ -36,14 +36,32 @@ pluginBundle {
     }
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '3.2.1'
-}
-
 publishing {
     publications {
         plugin(MavenPublication) {
             artifact jar
         }
     }
+}
+
+task deleteQuickstart() {
+    doLast {
+        def f = new File("Quickstart.zip")
+        if (f.exists()) f.delete()
+    }
+}
+
+task zipQuickstart(type: Zip) {
+    dependsOn deleteQuickstart
+    from('quickstart')
+    include '**/*.cpp', '**/*.hpp', 'gradle/**/*', 'build.gradle', 'settings.gradle', 'gradlew', 'gradlew.bat', '.gitignore'
+    exclude '.vscode', '.gradle'
+    destinationDir projectDir
+    archiveName 'Quickstart.zip'
+}
+
+build.dependsOn zipQuickstart
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.2.1'
 }

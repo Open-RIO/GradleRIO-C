@@ -1,0 +1,24 @@
+plugins {
+    // This 'apply false' is important as it tells gradle not to apply it to the root project
+    // (where we are now), as this has no FRC code. 
+    id "jaci.openrio.cpp.gradle.GradleRIO-C" version "1.0.2" apply false
+}
+
+// Hint: Look at settings.gradle. There's important stuff in there for multi-project builds
+// Subprojects will apply to every project except the root one (where we are now), i.e. my_library
+// and my_program
+subprojects {
+    apply plugin: "cpp"
+    // Apply GradleRIO-C that we defined above
+    apply plugin: "jaci.openrio.cpp.gradle.GradleRIO-C"
+
+
+    model {
+        frc {
+            team = "5333"
+            deployDirectory = "/home/lvuser/multiproject"
+        }
+    }
+}
+
+// See my_library/build.gradle and my_program/build.gradle for the rest of the buildscript

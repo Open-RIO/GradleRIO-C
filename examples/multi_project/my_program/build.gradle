@@ -1,0 +1,15 @@
+model {
+    components {
+        my_program(FRCUserProgram) {
+            // This executable is only for the RoboRIO
+            targetPlatform "roborio-arm"
+            sources.cpp {
+                source.srcDirs "src"
+                // my_library subproject
+                lib project: ":my_library", library: "my_library", linkage: "static"
+                // WPILib
+                lib library: "wpilib", linkage: "static"
+            }
+        }
+    }
+}
