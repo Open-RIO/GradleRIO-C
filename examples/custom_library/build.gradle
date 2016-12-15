@@ -1,5 +1,5 @@
 plugins {
-    id "jaci.openrio.cpp.gradle.GradleRIO-C" version "1.0.1"
+    id "jaci.openrio.cpp.gradle.GradleRIO-C" version "1.0.3"
 }
 
 apply plugin: "cpp"

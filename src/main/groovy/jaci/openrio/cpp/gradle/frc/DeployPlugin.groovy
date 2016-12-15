@@ -20,8 +20,8 @@ class DeployPlugin implements Plugin<Project> {
     void apply(Project project) {
         project.getPluginManager().apply(ComponentModelBasePlugin.class)
         project.extensions.create('deploy_project_wrapper', ProjectWrapper)
-        project.extensions.deploy_ssh = Ssh.newService()
         project.deploy_project_wrapper.project = project
+        project.extensions.deploy_ssh = Ssh.newService()
         project.task('deploy') {
             group "GradleRIO"
             description "Deploy all Binaries to the RoboRIO"

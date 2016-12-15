@@ -6,6 +6,10 @@ import groovy.util.*;
 import org.gradle.language.base.plugins.ComponentModelBasePlugin;
 import org.gradle.model.*;
 import org.gradle.platform.base.*;
+import org.gradle.nativeplatform.NativeLibraryBinarySpec;
+import org.gradle.language.nativeplatform.HeaderExportingSourceSet;
+import org.gradle.api.tasks.Copy;
+import org.gradle.api.tasks.Delete;
 
 import jaci.openrio.cpp.gradle.xtoolchain.XToolchainPlugin;
 import jaci.openrio.cpp.gradle.wpi.WPIPlugin;
@@ -43,6 +47,26 @@ class GradleRIO_C implements Plugin<Project> {
             binaries.create("trx") { binary ->
                 binary.outputDir = new File(buildDir, "trx/${component.name}")
                 binary.filename = component.name.toLowerCase()
+            }
+        }
+
+        @BinaryTasks
+        void addHeaderExportTask(ModelMap<Task> tasks, final NativeLibraryBinarySpec binary, @Path("buildDir") File buildDir) {
+            binary.inputs.withType(HeaderExportingSourceSet) { sourceSet ->
+                def deleteTaskName = binary.tasks.taskName("cleanHeaders", sourceSet.name)
+                def exportTaskName = binary.tasks.taskName("exportHeaders", sourceSet.name)
+                def outdir = new File(buildDir, "headers/${binary.getNamingScheme().getBaseName()}")
+
+                def _task = null
+                tasks.create(deleteTaskName, Delete) {
+                    _task = it
+                    delete outdir
+                }
+                tasks.create(exportTaskName, Copy) {
+                    dependsOn _task
+                    from sourceSet.exportedHeaders
+                    destinationDir = outdir
+                }
             }
         }
 
