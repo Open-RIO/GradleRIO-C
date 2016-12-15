@@ -40,6 +40,7 @@ class DeployPlugin implements Plugin<Project> {
             spec.setDeployDirectory("/home/lvuser")
             spec.setDeployTimeout(3)
             spec.setRobotCommand("") // Nothing, try to figure it out based on FRCUserProgram spec. Setting this to null bypasses generation
+            spec.setRunArguments("")
 
             spec.setActiveRioAddress(new TargetRIOAddress())
         }
@@ -123,7 +124,7 @@ class DeployPlugin implements Plugin<Project> {
             if (spec.getRobotCommand() == "") {
                 def done = false
                 container.withType(FRCUserProgram) {
-                    if (!done) createRobotCommandTask("bash -c 'cd ${spec.getDeployDirectory()} && ./${it.name}'", extensions.getByType(ProjectWrapper), spec)
+                    if (!done) createRobotCommandTask("bash -c 'cd ${spec.getDeployDirectory()} && ./${it.name} ${spec.getRunArguments()}'", extensions.getByType(ProjectWrapper), spec)
                     done = true
                 }
             }

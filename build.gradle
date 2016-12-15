@@ -1,3 +1,7 @@
+plugins {
+    id "com.gradle.plugin-publish" version "0.9.5"
+}
+
 apply plugin: 'groovy'
 apply plugin: 'maven-publish'
 
@@ -16,7 +20,21 @@ repositories {
 
 group = "jaci.openrio.cpp.gradle"
 archivesBaseName = "GradleRIO-C"
-version = "1.0.0"
+version = "1.0.1"
+
+pluginBundle {
+    website = 'https://github.com/Open-RIO/GradleRIO-C'
+    vcsUrl = 'https://github.com/Open-RIO/GradleRIO-C'
+    description = 'Managing FRC C++ projects, the Gradle way'
+    tags = ['frc', 'wpilib', 'toast', 'openrio', 'gradlerio']
+
+    plugins {
+        wpilibVersionPlugin {
+            id = "${project.group}.${project.archivesBaseName}"
+            displayName = 'GradleRIO C'
+        }
+    }
+}
 
 task wrapper(type: Wrapper) {
     gradleVersion = '3.2.1'

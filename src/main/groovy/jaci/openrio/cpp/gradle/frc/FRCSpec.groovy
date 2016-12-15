@@ -27,6 +27,9 @@ public interface FRCSpec {
     String getRobotCommand()
     void setRobotCommand(String cmd)
 
+    String getRunArguments()
+    void setRunArguments(String args)
+
     @Unmanaged
     TargetRIOAddress getActiveRioAddress()
     void setActiveRioAddress(TargetRIOAddress address)
