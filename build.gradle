@@ -20,7 +20,7 @@ repositories {
 
 group = "jaci.openrio.cpp.gradle"
 archivesBaseName = "GradleRIO-C"
-version = "1.1.1"
+version = "1.1.3"
 
 pluginBundle {
     website = 'https://github.com/Open-RIO/GradleRIO-C'
@@ -61,6 +61,12 @@ task zipQuickstart(type: Zip) {
 }
 
 build.dependsOn zipQuickstart
+
+// Release both plugin and build other projects
+task fullRelease() {
+    dependsOn publishPlugins
+    dependsOn zipQuickstart
+}
 
 task wrapper(type: Wrapper) {
     gradleVersion = '3.2.1'
