@@ -12,6 +12,7 @@ import org.gradle.api.internal.file.FileResolver
 import org.gradle.process.internal.ExecActionFactory
 import org.gradle.internal.reflect.Instantiator
 import org.gradle.internal.service.ServiceRegistry
+import org.gradle.nativeplatform.*
 import org.gradle.nativeplatform.toolchain.*
 import org.gradle.nativeplatform.platform.NativePlatform
 import org.gradle.nativeplatform.plugins.NativeComponentPlugin
@@ -141,6 +142,15 @@ class XToolchainPlugin implements Plugin<Project> {
                             // For a Toast project we would need -rdynamic in here
                         }
                     }
+                }
+            }
+        }
+
+        @Mutate
+        void configureRoborioBuildable(BinaryContainer binaries) {
+            binaries.withType(NativeBinarySpec) {
+                if (it.toolChain in XToolchainGCC && !it.toolChain.isCrossCompilerPresent()) {
+                    it.buildable = false
                 }
             }
         }

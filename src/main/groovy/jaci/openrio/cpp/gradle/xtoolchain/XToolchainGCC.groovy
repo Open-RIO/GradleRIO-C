@@ -36,6 +36,10 @@ public class XToolchainGCC extends GccToolChain {
         path(bindir)
     }
 
+    public boolean isCrossCompilerPresent() {
+        return new File(XToolchainPlugin.getActiveToolchain().get_toolchain_root(), "bin/arm-frc-linux-gnueabi-gcc").exists()
+    }
+
     @Override
     protected String getTypeName() {
         return "RoboRioArmGcc";
