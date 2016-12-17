@@ -95,8 +95,8 @@ class XToolchainPlugin implements Plugin<Project> {
 
         @Mutate
         void configureToolchains(NativeToolChainRegistry toolChains, @Path("cpp") CppSpec cppSpec) {
-            toolChains.all {
-                if (it in VisualCpp) {
+            toolChains.all { toolchain ->
+                if (toolchain in VisualCpp) {
                     if (OperatingSystem.current().isWindows()) {
                         // Taken from nt-core, fixes VS2015 compilation issues 
                         // Workaround for VS2015 adapted from https://github.com/couchbase/couchbase-lite-java-native/issues/23
@@ -134,11 +134,13 @@ class XToolchainPlugin implements Plugin<Project> {
                             args << "-std=${cppSpec.getCppVersion()}"
                             if (cppSpec.getDebugInfo()) args << "-g"
                         }
-                        linker.withArguments { args ->
-                            args << "-ldl"
-                            args << "-lrt"
-                            args << "-lm"
-                            // For a Toast project we would need -rdynamic in here
+                        if (toolchain in Gcc) {
+                            linker.withArguments { args ->
+                                args << "-ldl"
+                                args << "-lrt"
+                                args << "-lm"
+                                // For a Toast project we would need -rdynamic in here
+                            }
                         }
                     }
                 }
