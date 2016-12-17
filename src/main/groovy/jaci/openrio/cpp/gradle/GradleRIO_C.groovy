@@ -6,7 +6,7 @@ import groovy.util.*;
 import org.gradle.language.base.plugins.ComponentModelBasePlugin;
 import org.gradle.model.*;
 import org.gradle.platform.base.*;
-import org.gradle.nativeplatform.NativeLibraryBinarySpec;
+import org.gradle.nativeplatform.*;
 import org.gradle.language.nativeplatform.HeaderExportingSourceSet;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.Delete;
@@ -33,6 +33,32 @@ class GradleRIO_C implements Plugin<Project> {
     }
 
     static class ToastRules extends RuleSource {
+        @Model("libraries")
+        void createLibrariesModel(LibrariesSpec spec) { }
+
+        @Mutate
+        void addPrebuiltLibraries(Repositories repos, @Path("libraries") LibrariesSpec spec) {
+            PrebuiltLibraries libs = repos.maybeCreate("wpilib", PrebuiltLibraries.class)
+            spec.each { lib ->
+                def libname = lib.backingNode.path.name
+                if (lib in LibraryPrebuilt) {
+                    libs.create(libname) { plib ->
+                        plib.headers.srcDir lib.getHeaders()
+                        if (lib.getStaticFile() != null) {
+                            binaries.withType(StaticLibraryBinary) {
+                                staticLibraryFile = lib.getStaticFile()
+                            }
+                        }
+                        if (lib.getSharedFile() != null) {
+                            binaries.withType(SharedLibraryBinary) {
+                                sharedLibraryFile = lib.getSharedFile()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         @ComponentType
         void registerComponent(TypeBuilder<ToastResourceSpec> builder) { }
 

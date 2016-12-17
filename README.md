@@ -93,6 +93,19 @@ model {
         gitVersion = "3784b66"              // Commit, Branch or Tag to checkout before building
     }
 
+    // Use this block to add libraries that have been prebuilt (i.e. device libraries like NavX, or other code)
+    // If you're building a library from source, it is better to add that as a dependency or as another component.
+    // If the library uses GradleRIO, use the multi_project example. If it doesn't, you can add the sources as shown
+    // in the custom_library example. 
+    // This block is optional.
+    libraries {
+        navx(LibraryPrebuilt) {
+            headers "navx/include"
+            staticFile "navx/navx.a"
+            sharedFile "navx/navx.so"
+        }
+    }
+
     components {
         // This is where you define your actual C++ binary
         my_program(FRCUserProgram) {
@@ -105,6 +118,7 @@ model {
                     srcDirs "include"           // Where your .h/.hpp files are stored
                 }
                 lib library: "wpilib", linkage: "static"    // Compile with WPILib
+                lib library: "navx", linkage: "static"      // From our libraries {} block
             }
         }
     }
