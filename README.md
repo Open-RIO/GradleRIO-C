@@ -6,7 +6,7 @@ the C++ toolchain (with the exception of debian linux, which requires sudo and/o
 
 ## Commands
 _Replace `gradlew` with `./gradlew` if you're on Mac or Linux_  
-`gradlew install_frc_toolchain` will install the FRC C++ Toolchain, allowing you to build for the RoboRIO  
+`gradlew install_frc_toolchain` will install the FRC C++ Toolchain, allowing you to build for the RoboRIO (note: while this is available on linux, it is best to install it yourself with the instructions [here](http://first.wpi.edu/FRC/roborio/toolchains/FRCLinuxToolchain2016.txt) as it requires sudo access)  
 `gradlew build` will build your FRC Code  
 `gradlew build deploy` will build and deploy your FRC Code. Can also be run without build as `gradlew deploy`  
 `gradlew restart_rio_code` will restart user code runningo n the RoboRIO
@@ -93,6 +93,19 @@ model {
         gitVersion = "3784b66"              // Commit, Branch or Tag to checkout before building
     }
 
+    // Use this block to add libraries that have been prebuilt (i.e. device libraries like NavX, or other code)
+    // If you're building a library from source, it is better to add that as a dependency or as another component.
+    // If the library uses GradleRIO, use the multi_project example. If it doesn't, you can add the sources as shown
+    // in the custom_library example. 
+    // This block is optional.
+    libraries {
+        navx(LibraryPrebuilt) {
+            headers "navx/include"
+            staticFile "navx/navx.a"
+            sharedFile "navx/navx.so"
+        }
+    }
+
     components {
         // This is where you define your actual C++ binary
         my_program(FRCUserProgram) {
@@ -105,8 +118,21 @@ model {
                     srcDirs "include"           // Where your .h/.hpp files are stored
                 }
                 lib library: "wpilib", linkage: "static"    // Compile with WPILib
+                lib library: "navx", linkage: "static"      // From our libraries {} block
             }
         }
     }
 }
 ```
+
+## The Windows Subsystem For Linux
+GradleRIO-C supports the Windows Subsystem for Linux, a Beta feature that can be run with Windows 10. For this to work, however, you need the following requirements:
+- Windows Build 14986+ (Windows Creator Update, Available now with the Windows Insider Program)
+- 4GB+ Physical Memory, 4GB - 8GB Windows Pagefile
+
+The following packages are required to be installed on WSL assuming a clean image:
+- `sudo apt-get install git build-essential`
+- `sudo apt-get install gcc-multilib g++-multilib`
+- Java 8 update 6+ (you can get the instructions [here, just ignore the gradle part if you want to use the gradle wrapper provided](https://github.com/Microsoft/BashOnWindows/issues/196#issuecomment-225305971))
+
+Please note that, as of current, the Windows Subsystem for Linux does **NOT** support the FRC Toolchain. This may change for the 2017 season, however using the 2016 branch is not possible. Sorry.
