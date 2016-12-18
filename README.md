@@ -9,7 +9,7 @@ _Replace `gradlew` with `./gradlew` if you're on Mac or Linux_
 `gradlew install_frc_toolchain` will install the FRC C++ Toolchain, allowing you to build for the RoboRIO (note: while this is available on linux, it is best to install it yourself with the instructions [here](http://first.wpi.edu/FRC/roborio/toolchains/FRCLinuxToolchain2016.txt) as it requires sudo access)  
 `gradlew build` will build your FRC Code  
 `gradlew build deploy` will build and deploy your FRC Code. Can also be run without build as `gradlew deploy`  
-`gradlew restart_rio_code` will restart user code runningo n the RoboRIO
+`gradlew restart_rio_code` will restart user code running on the RoboRIO
 
 Run `gradlew tasks --all` for more information.
 
