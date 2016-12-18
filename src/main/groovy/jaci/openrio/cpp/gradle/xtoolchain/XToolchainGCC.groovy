@@ -37,7 +37,8 @@ public class XToolchainGCC extends GccToolChain {
     }
 
     public boolean isCrossCompilerPresent() {
-        return new File(XToolchainPlugin.getActiveToolchain().get_toolchain_root(), "bin/arm-frc-linux-gnueabi-gcc").exists()
+        String gccSuffix = OperatingSystem.current().isWindows() ? ".exe" : ""
+        return new File(XToolchainPlugin.getActiveToolchain().get_toolchain_root(), "bin/arm-frc-linux-gnueabi-gcc${gccSuffix}").exists()
     }
 
     @Override
