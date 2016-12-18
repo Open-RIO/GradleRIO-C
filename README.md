@@ -88,6 +88,10 @@ model {
     }
 
     // This block is entirely optional. If not specified, it will use the WPILib included with the WPILib Eclipse Plugins.
+    // NOTE: If you plan to use WPI from a Git repo, the FRC Toolchain Bin directory must be on your System PATH. If you installed
+    // on linux (or without GradleRIO), this is already done. If you installed on Windows or Mac with gradlew install_frc_toolchain,
+    // you must set your path before building, as WPILib's Git Repo does not look in ~/.gradle/gradlerioc/toolchain/<platform>/bin
+    // for the cross-compiling toolchain
     wpi {
         git = true                          // Set to true to use Git instead of the local WPILib (github/wpilibsuite/allwpilib)
         gitVersion = "3784b66"              // Commit, Branch or Tag to checkout before building
