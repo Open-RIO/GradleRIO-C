@@ -20,7 +20,7 @@ repositories {
 
 group = "jaci.openrio.cpp.gradle"
 archivesBaseName = "GradleRIO-C"
-version = "1.1.4"
+version = "1.2.0"
 
 pluginBundle {
     website = 'https://github.com/Open-RIO/GradleRIO-C'

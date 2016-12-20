@@ -2,6 +2,7 @@ package jaci.openrio.cpp.gradle.wpi
 
 import org.gradle.api.*
 import org.gradle.api.tasks.*
+import org.gradle.api.artifacts.*
 import org.gradle.model.*
 import org.gradle.language.base.plugins.ComponentModelBasePlugin
 import org.gradle.nativeplatform.*
@@ -26,6 +27,11 @@ class WPIPlugin implements Plugin<Project> {
         project.getPluginManager().apply(ComponentModelBasePlugin.class)
         project.extensions.create('wpi_project_wrapper', ProjectWrapper)
         project.wpi_project_wrapper.project = project
+
+        project.tasks.create("download_wpi", DefaultTask) {
+            group "GradleRIO"
+            description "Download and Unzip WPILib if WPILib is fetched from Maven"
+        }
     }
 
     static class Rules extends RuleSource {
@@ -37,11 +43,23 @@ class WPIPlugin implements Plugin<Project> {
             spec.setGit(false)
             spec.setGitVersion("master")
             spec.setGitRemote("https://github.com/wpilibsuite/allwpilib.git")
+            spec.setEclipsePlugins(false)
+            spec.setMavenBranch("release")
+
+            spec.setMavenWpilib("+")
+            spec.setMavenHal("<WPILIB>")
+            spec.setMavenWpiutil("+")
+            spec.setMavenNtcore("+")
+            spec.setMavenCscore("+")
+
+            spec.setLocal(false)
+            spec.setLocalDirectory(null)
         }
 
         @Mutate
-        void addPrebuiltLibraries(Repositories repos, @Path("wpi") WpiSpec wpiSpec) {
+        void addPrebuiltLibraries(Repositories repos, @Path("wpi") WpiSpec wpiSpec, final ExtensionContainer extensions) {
             PrebuiltLibraries libs = repos.maybeCreate("wpilib", PrebuiltLibraries.class)
+            def project = extensions.getByType(ProjectWrapper).project
 
             if (wpiSpec.getGit()) {
                 // Use WPILib Github
@@ -52,13 +70,56 @@ class WPIPlugin implements Plugin<Project> {
                         staticLibraryFile = new File("${basedir}/lib/libwpi.so")
                     }
                 }
-            } else {
+            } else if (wpiSpec.getEclipsePlugins()) {
                 // Use ~/wpilib/ (WPILib Eclipse Plugins) [default]
                 libs.create("wpilib") {
                     def basedir = new File("${System.getProperty('user.home')}/wpilib/cpp/current")
                     headers.srcDir "${basedir}/include"
                     binaries.withType(StaticLibraryBinary) {
                         staticLibraryFile = new File("${basedir}/lib/libwpi.so")
+                    }
+                }
+            } else if (wpiSpec.getLocal()) {
+                // Use from a local directory
+                def dir = wpiSpec.getLocalDirectory()
+                if (dir != null && dir.exists()) {
+                    libs.create("wpilib") {
+                        headers.srcDir "${dir}/include"
+                        binaries.withType(StaticLibraryBinary) {
+                            staticLibraryFile = new File(dir, "lib/libwpi.so")
+                        }
+                    }
+                }
+            } else {
+                // Use http://first.wpi.edu/FRC/roborio/maven/
+                def url = "http://first.wpi.edu/FRC/roborio/maven/${wpiSpec.getMavenBranch()}"
+                project.getConfigurations().maybeCreate("wpi_maven")
+                project.repositories.maven {
+                    it.name = "WPI"
+                    it.url = url
+                }
+
+                project.dependencies.add("wpi_maven", "edu.wpi.first.wpilibc:athena:${wpiSpec.getMavenWpilib()}")
+                project.dependencies.add("wpi_maven", "edu.wpi.first.wpilib:hal:${wpiSpec.getMavenHal() == "<WPILIB>" ? wpiSpec.getMavenWpilib() : wpiSpec.getMavenHal()}")
+                project.dependencies.add("wpi_maven", "edu.wpi.first.wpilib:wpiutil:${wpiSpec.getMavenWpiutil()}:arm@zip")
+                project.dependencies.add("wpi_maven", "edu.wpi.first.wpilib.networktables.cpp:NetworkTables:${wpiSpec.getMavenNtcore()}:arm@zip")
+                project.dependencies.add("wpi_maven", "edu.wpi.cscore.cpp:cscore:${wpiSpec.getMavenCscore()}:athena-uberzip@zip")
+
+                def dltask = []
+                project.getConfigurations().wpi_maven.files.each { file ->
+                    def dname = file.name.substring(0, file.name.indexOf('-'))
+                    dltask << project.tasks.create("download_wpi_${dname}", Copy) {
+                        description = "Downloads and Unzips $dname from Maven"
+                        group = "GradleRIO"
+                        from project.zipTree(file)
+                        into "${project.buildDir}/dependencies/wpi"
+                    }
+                }
+                dltask.each { t -> project.download_wpi.dependsOn(t) }
+                libs.create("wpilib") {
+                    headers.srcDir "${project.buildDir}/dependencies/wpi/include"
+                    binaries.withType(StaticLibraryBinary) {
+                        staticLibraryFile = new File("${project.buildDir}/dependencies/wpi/lib/libwpi.so")
                     }
                 }
             }
@@ -127,6 +188,12 @@ class WPIPlugin implements Plugin<Project> {
                         }
                     }
                     libSearchPath = new File(builddir, "lib").absolutePath
+                } else if (!wpiSpec.getLocal() && !wpiSpec.getEclipsePlugins()) {
+                    libSearchPath = "${project.buildDir}/dependencies/wpi/lib"
+                    tasks.withType(CppCompile) {
+                        dependsOn project.download_wpi
+                        binary.linker.args << "-L${project.buildDir}/dependencies/wpi/Linux/arm".toString()
+                    }
                 }
                 binary.tasks.withType(CppCompile) {
                     binary.linker.args << "-L${libSearchPath}".toString()

@@ -87,14 +87,27 @@ model {
         runArguments = ""                   // Arguments to add to robotCommand. No effect if robotCommand is manually set
     }
 
-    // This block is entirely optional. If not specified, it will use the WPILib included with the WPILib Eclipse Plugins.
+    // This block is entirely optional. If not specified, it will use the WPILib from the WPILib Maven Repository and the default options
     // NOTE: If you plan to use WPI from a Git repo, the FRC Toolchain Bin directory must be on your System PATH. If you installed
     // on linux (or without GradleRIO), this is already done. If you installed on Windows or Mac with gradlew install_frc_toolchain,
     // you must set your path before building, as WPILib's Git Repo does not look in ~/.gradle/gradlerioc/toolchain/<platform>/bin
     // for the cross-compiling toolchain
     wpi {
-        git = true                          // Set to true to use Git instead of the local WPILib (github/wpilibsuite/allwpilib)
+        git = true                          // Set to true to use Git instead of the WPI Maven (github/wpilibsuite/allwpilib)
         gitVersion = "3784b66"              // Commit, Branch or Tag to checkout before building
+
+        eclipsePlugins = true               // Set to true to use Local WPILib instead of the WPI Maven
+
+        local = true                        // Set to true if you want to use the WPILib libraries from a local path on your filesystem
+        localDirectory = file('libs/wpi')   // Set this to where you have extracted the WPILibC Zip file (subdirs: lib, include). Must be set if local is true
+
+        // Maven is the default provider for the WPILib library
+        mavenBranch = "development"         // Set which branch of the WPILib Maven to use. By default, this is 'release'
+        mavenWpilib = "2017.1.1-beta-3"     // Set which version of WPILib to use from the Maven. By default, this is '+' (latest release)
+        mavenHal    = "2017.1.1-beta-3"     // Set which version of the HAL to use from the Maven. By default, this is the same as mavenWpilib
+        mavenWpiutil = "1.0.2"              // Set which version of WPIUtil to use from the Maven. By default, this is '+' (latest release)
+        mavenNtcore = "3.1.2"               // Set which version of NTCore to use from the Maven. By default, this is '+' (latest release)
+        mavenCscore = "0.9.1-beta-3"        // Set which version of CSCore to use from the Maven. By default, this is '+' (latest release)
     }
 
     // Use this block to add libraries that have been prebuilt (i.e. device libraries like NavX, or other code)
