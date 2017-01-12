@@ -15,7 +15,6 @@ import org.gradle.api.plugins.ExtensionContainer
 import groovy.transform.TupleConstructor
 
 import jaci.openrio.cpp.gradle.GradleRIO_C
-import org.ajoberstar.grgit.Grgit
 
 class ProjectWrapper {
     Project project
@@ -40,20 +39,14 @@ class WPIPlugin implements Plugin<Project> {
 
         @Defaults
         void defaultWpiModel(WpiSpec spec) {
-            spec.setGit(false)
-            spec.setGitVersion("master")
-            spec.setGitRemote("https://github.com/wpilibsuite/allwpilib.git")
-            spec.setEclipsePlugins(false)
             spec.setMavenBranch("release")
 
-            spec.setMavenWpilib("+")
-            spec.setMavenHal("<WPILIB>")
-            spec.setMavenWpiutil("+")
-            spec.setMavenNtcore("+")
-            spec.setMavenCscore("+")
-
-            spec.setLocal(false)
-            spec.setLocalDirectory(null)
+            spec.setWpilibVersion("+")
+            spec.setHalVersion("<WPILIB>")
+            spec.setWpiutilVersion("+")
+            spec.setNtcoreVersion("+")
+            spec.setCscoreVersion("+")
+            spec.setTalonSrxVersion("+")
         }
 
         @Mutate
@@ -61,75 +54,67 @@ class WPIPlugin implements Plugin<Project> {
             PrebuiltLibraries libs = repos.maybeCreate("wpilib", PrebuiltLibraries.class)
             def project = extensions.getByType(ProjectWrapper).project
 
-            if (wpiSpec.getGit()) {
-                // Use WPILib Github
-                libs.create("wpilib") {
-                    def basedir = new File(GradleRIO_C.getGlobalDirectory(), "wpi")
-                    headers.srcDir "${basedir}/include"
-                    binaries.withType(StaticLibraryBinary) {
-                        staticLibraryFile = new File("${basedir}/lib/libwpi.so")
-                    }
-                }
-            } else if (wpiSpec.getEclipsePlugins()) {
-                // Use ~/wpilib/ (WPILib Eclipse Plugins) [default]
-                libs.create("wpilib") {
-                    def basedir = new File("${System.getProperty('user.home')}/wpilib/cpp/current")
-                    headers.srcDir "${basedir}/include"
-                    binaries.withType(StaticLibraryBinary) {
-                        staticLibraryFile = new File("${basedir}/lib/libwpi.so")
-                    }
-                }
-            } else if (wpiSpec.getLocal()) {
-                // Use from a local directory
-                def dir = wpiSpec.getLocalDirectory()
-                if (dir != null && dir.exists()) {
-                    libs.create("wpilib") {
-                        headers.srcDir "${dir}/include"
-                        binaries.withType(StaticLibraryBinary) {
-                            staticLibraryFile = new File(dir, "lib/libwpi.so")
-                        }
-                    }
-                }
-            } else {
-                // Use http://first.wpi.edu/FRC/roborio/maven/
-                def url = "http://first.wpi.edu/FRC/roborio/maven/${wpiSpec.getMavenBranch()}"
-                project.getConfigurations().maybeCreate("wpi_maven")
-                project.repositories.maven {
-                    it.name = "WPI"
-                    it.url = url
-                }
+            // Use http://first.wpi.edu/FRC/roborio/maven/
+            def url = "http://first.wpi.edu/FRC/roborio/maven/${wpiSpec.getMavenBranch()}"
+            project.getConfigurations().maybeCreate("wpi_maven")
+            project.getConfigurations().maybeCreate("third_party")
+            
+            project.repositories.maven {
+                it.name = "WPI"
+                it.url = url
+            }
+            project.repositories.maven {
+                it.name = "Jaci"
+                it.url = "http://dev.imjac.in/maven"
+            }
 
-                project.dependencies.add("wpi_maven", "edu.wpi.first.wpilibc:athena:${wpiSpec.getMavenWpilib()}")
-                project.dependencies.add("wpi_maven", "edu.wpi.first.wpilib:hal:${wpiSpec.getMavenHal() == "<WPILIB>" ? wpiSpec.getMavenWpilib() : wpiSpec.getMavenHal()}")
-                project.dependencies.add("wpi_maven", "edu.wpi.first.wpilib:wpiutil:${wpiSpec.getMavenWpiutil()}:arm@zip")
-                project.dependencies.add("wpi_maven", "edu.wpi.first.wpilib.networktables.cpp:NetworkTables:${wpiSpec.getMavenNtcore()}:arm@zip")
-                project.dependencies.add("wpi_maven", "edu.wpi.cscore.cpp:cscore:${wpiSpec.getMavenCscore()}:athena-uberzip@zip")
+            project.dependencies.add("wpi_maven", "edu.wpi.first.wpilibc:athena:${wpiSpec.getWpilibVersion()}")
+            project.dependencies.add("wpi_maven", "edu.wpi.first.wpilib:hal:${wpiSpec.getHalVersion() == "<WPILIB>" ? wpiSpec.getWpilibVersion() : wpiSpec.getHalVersion()}")
+            project.dependencies.add("wpi_maven", "edu.wpi.first.wpilib:wpiutil:${wpiSpec.getWpiutilVersion()}:arm@zip")
+            project.dependencies.add("wpi_maven", "edu.wpi.first.wpilib.networktables.cpp:NetworkTables:${wpiSpec.getNtcoreVersion()}:arm@zip")
+            project.dependencies.add("wpi_maven", "edu.wpi.cscore.cpp:cscore:${wpiSpec.getCscoreVersion()}:athena-uberzip@zip")
+            
+            project.dependencies.add("third_party", "thirdparty.frc.ctre:Toolsuite-Zip:${wpiSpec.getTalonSrxVersion()}@zip")
 
-                def dltask = []
-                project.getConfigurations().wpi_maven.files.each { file ->
-                    def dname = file.name.substring(0, file.name.indexOf('-'))
-                    dltask << project.tasks.create("download_wpi_${dname}", Copy) {
-                        description = "Downloads and Unzips $dname from Maven"
-                        group = "GradleRIO"
-                        from project.zipTree(file)
-                        into "${project.buildDir}/dependencies/wpi"
-                    }
+            def dltask = []
+            project.getConfigurations().wpi_maven.files.each { file ->
+                def dname = file.name.substring(0, file.name.indexOf('-'))
+                dltask << project.tasks.create("download_wpi_${dname}", Copy) {
+                    description = "Downloads and Unzips $dname from Maven"
+                    group = "GradleRIO"
+                    from project.zipTree(file)
+                    into "${project.buildDir}/dependencies/wpi"
                 }
-                dltask.each { t -> project.download_wpi.dependsOn(t) }
-                libs.create("wpilib") {
-                    headers.srcDir "${project.buildDir}/dependencies/wpi/include"
-                    binaries.withType(StaticLibraryBinary) {
-                        staticLibraryFile = new File("${project.buildDir}/dependencies/wpi/lib/libwpi.so")
-                    }
+            }
+            project.getConfigurations().third_party.files.each { file ->
+                def dname = file.name.substring(0, file.name.indexOf("-"))
+                dltask << project.tasks.create("download_lib_${dname}", Copy) {
+                    description = "Downloads and Unzips the $dname Third Party Library from Maven"
+                    group = "GradleRIO"
+                    from project.zipTree(file)
+                    into "${project.buildDir}/dependencies/third/${dname}"
+                }
+            }
+            dltask.each { t -> project.download_wpi.dependsOn(t) }
+            libs.create("wpilib") {
+                headers.srcDir "${project.buildDir}/dependencies/wpi/include"
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = new File("${project.buildDir}/dependencies/wpi/lib/libwpi.so")
+                }
+            }
+
+            libs.create("talonSrx") {
+                headers.srcDir "${project.buildDir}/dependencies/third/Toolsuite/cpp/include"
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = new File("${project.buildDir}/dependencies/third/Toolsuite/cpp/lib/libTalonSRXLib.a")
                 }
             }
         }
 
         // We can't add a Library Search Path in PrebuiltLibraries, so we have to do it as an additional step to 
         // tell the linker where WPILib's other libraries (HAL, NTCore etc) are
-        // TODO: Move this to the project space as the WPI model is project-wide
         @BinaryTasks
-        void addWpiGitTasks(ModelMap<Task> tasks, final NativeBinarySpec binary, final ExtensionContainer extensions, @Path("wpi") WpiSpec wpiSpec) {
+        void addWpiTasks(ModelMap<Task> tasks, final NativeBinarySpec binary, final ExtensionContainer extensions, @Path("wpi") WpiSpec wpiSpec) {
             def link_wpi = false
             binary.inputs.withType(CppSourceSet) { sourceSet ->
                 sourceSet.libs.each { lib ->
@@ -141,64 +126,16 @@ class WPIPlugin implements Plugin<Project> {
             if (link_wpi) {
                 final ProjectWrapper projectWrapper = extensions.getByType(ProjectWrapper)
                 final Project project = projectWrapper.project
-                def libSearchPath = "${System.getProperty('user.home')}/wpilib/cpp/current/lib"
-                if (wpiSpec.getGit()) {
-                    // This is mostly going to have to change as soon as 2017's full releases roll around due to changes in
-                    // WPILib's build system
-                    // This will likely be incubating for a week after kickoff so I can get everything together, as unfortunately
-                    // OpenRIO does not have Beta Access (wink wink nudge nudge)
-                    // TODO A way to update the repo
-                    def clone_task = null, checkout_task = null
-                    tasks.create(binary.tasks.taskName("clone_wpi_git"), DefaultTask) { task ->
-                        clone_task = task
-                        def outdir = new File(GradleRIO_C.getGlobalDirectory(), "wpilib")
-                        task.doLast {
-                            if (!outdir.exists()) {
-                                println "Fetching WPILib from Github for the first time. This may take a while..."
-                                Grgit.clone(dir: outdir, uri: wpiSpec.getGitRemote())
-                            }
-                        }
-                    }
-                    tasks.create(binary.tasks.taskName("checkout_wpi_git"), DefaultTask) { task ->
-                        task.dependsOn clone_task
-                        checkout_task = task
-                        def gitdir = new File(GradleRIO_C.getGlobalDirectory(), "wpilib")
-                        task.doLast {
-                            def git = Grgit.open(dir: gitdir)
-                            def git_target = wpiSpec.getGitVersion()
-
-                            git.checkout(branch: git_target)
-                        }
-                    }
-                    def builddir = new File(GradleRIO_C.getGlobalDirectory(), "wpi")
-                    tasks.create(binary.tasks.taskName("build_wpi_git"), GradleBuild) { task ->
-                        task.dependsOn checkout_task
-                        def gitdir = new File(GradleRIO_C.getGlobalDirectory(), "wpilib")
-                        task.buildFile = new File(gitdir, "build.gradle").absolutePath
-                        task.tasks = [':wpilibc:build', 'wpilibcZip']
-
-                        task.doLast {
-                            def git = Grgit.open(dir: gitdir)
-                            builddir.mkdirs()
-                            project.delete builddir
-                            project.copy {
-                                from project.zipTree(new File(gitdir, "wpilibc/build/wpilibc.zip"))
-                                into builddir
-                            }
-                        }
-                    }
-                    libSearchPath = new File(builddir, "lib").absolutePath
-                } else if (!wpiSpec.getLocal() && !wpiSpec.getEclipsePlugins()) {
-                    libSearchPath = "${project.buildDir}/dependencies/wpi/lib"
-                    tasks.withType(CppCompile) {
-                        dependsOn project.download_wpi
-                        binary.linker.args << "-L${project.buildDir}/dependencies/wpi/Linux/arm".toString()
-                    }
-                }
-                binary.tasks.withType(CppCompile) {
+                
+                def libSearchPath = "${project.buildDir}/dependencies/wpi/lib"
+                tasks.withType(CCompile) {
+                    dependsOn project.download_wpi
+                    binary.linker.args << "-L${project.buildDir}/dependencies/wpi/Linux/arm".toString()
                     binary.linker.args << "-L${libSearchPath}".toString()
                 }
-                binary.tasks.withType(CCompile) {
+                tasks.withType(CppCompile) {
+                    dependsOn project.download_wpi
+                    binary.linker.args << "-L${project.buildDir}/dependencies/wpi/Linux/arm".toString()
                     binary.linker.args << "-L${libSearchPath}".toString()
                 }
             }

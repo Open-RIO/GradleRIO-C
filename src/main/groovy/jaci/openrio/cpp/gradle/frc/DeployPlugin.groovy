@@ -103,12 +103,24 @@ class DeployPlugin implements Plugin<Project> {
             projectWrapper.project.task("restart_rio_code") {
                 group "GradleRIO"
                 description "Restart User Code running on the RoboRIO"
-                projectWrapper.project.tasks.getByName("deploy").finalizedBy(it)
                 dependsOn(projectWrapper.project.tasks.getByName("determine_rio_address"))
                 doLast {
                     projectWrapper.project.deploy_ssh.run {
                         session(host: spec.getActiveRioAddress().address, user: 'lvuser', timeoutSec: spec.getDeployTimeout(), knownHosts: AllowAnyHosts.instance) {
                             execute ". /etc/profile.d/natinst-path.sh; /usr/local/frc/bin/frcKillRobot.sh -t -r", ignoreError: true
+                        }
+                    }
+                }
+            }
+
+            projectWrapper.project.task("mark_libraries_dirty") {
+                group "GradleRIO"
+                description "Mark RoboRIO FRC Libraries as dirty (force deploy task to redeploy wpilib and other libraries)"
+                dependsOn(projectWrapper.project.tasks.getByName("determine_rio_address"))
+                doLast {
+                    projectWrapper.project.deploy_ssh.run {
+                        session(host: spec.getActiveRioAddress().address, user: 'admin', timeoutSec: spec.getDeployTimeout(), knownHosts: AllowAnyHosts.instance) {
+                            execute "rm -r /usr/local/frc/lib/_gradlerio", ignoreError: true
                         }
                     }
                 }
@@ -124,7 +136,7 @@ class DeployPlugin implements Plugin<Project> {
             if (spec.getRobotCommand() == "") {
                 def done = false
                 container.withType(FRCUserProgram) {
-                    if (!done) createRobotCommandTask("bash -c 'cd ${spec.getDeployDirectory()} && ./${it.name} ${spec.getRunArguments()}'", extensions.getByType(ProjectWrapper), spec)
+                    if (!done) createRobotCommandTask("/usr/local/frc/bin/netconsole-host bash -c 'cd ${spec.getDeployDirectory()} && ./${it.name} ${spec.getRunArguments()}'", extensions.getByType(ProjectWrapper), spec)
                     done = true
                 }
             }
@@ -168,12 +180,59 @@ class DeployPlugin implements Plugin<Project> {
                             doLast {
                                 if (file.exists())
                                     projectWrapper.project.deploy_ssh.run {
+                                        session(host: spec.getActiveRioAddress().address, user: 'admin', timeoutSec: spec.getDeployTimeout(), knownHosts: AllowAnyHosts.instance) {
+                                            def dir = "${projectWrapper.project.buildDir}/dependencies/wpi"
+                                            def patternsLib = [
+                                                "libHALAthena.so",
+                                                "libopencv*.so.3.1",
+                                                "libcscore.so",
+                                                "libwpilibc.so"
+                                            ]
+                                            def patternsLinuxArm = [
+                                                "libntcore.so",
+                                                "libwpiutil.so"
+                                            ]
+                                            execute "mkdir -p /usr/local/frc/lib/_gradlerio"
+                                            patternsLib.each { pat ->
+                                                project.fileTree("${dir}/lib").include(pat).visit { vis ->
+                                                    project.ant.checksum(file: vis.file)
+                                                    def check = new File("${vis.file.absolutePath}.MD5").text.trim()
+                                                    def riocheck = execute "cat /usr/local/frc/lib/_gradlerio/${vis.file.name}.MD5 2> /dev/null || echo 'none'", ignoreError: true
+                                                    if (check != riocheck.trim()) {
+                                                        println "RoboRIO Library ${vis.file.name} out of date! Updating Library"
+                                                        put from: vis.file, into: "/usr/local/frc/lib"
+                                                        put from: "${vis.file.path}.MD5", into: "/usr/local/frc/lib/_gradlerio"
+                                                    }
+                                                }
+                                            }
+                                            patternsLinuxArm.each { pat ->
+                                                project.fileTree("${dir}/Linux/arm").include(pat).visit { vis ->
+                                                    project.ant.checksum(file: vis.file)
+                                                    def check = new File("${vis.file.absolutePath}.MD5").text.trim()
+                                                    def riocheck = execute "cat /usr/local/frc/lib/_gradlerio/${vis.file.name}.MD5 2> /dev/null || echo 'none'", ignoreError: true
+                                                    if (check != riocheck.trim()) {
+                                                        println "RoboRIO Library ${vis.file.name} out of date! Updating Library"
+                                                        put from: vis.file, into: "/usr/local/frc/lib"
+                                                        put from: "${vis.file.path}.MD5", into: "/usr/local/frc/lib/_gradlerio"
+                                                    }
+                                                }
+                                            }
+                                            
+                                            def instream = DeployPlugin.class.getClassLoader().getResourceAsStream("netconsole/netconsole-host")
+                                            put from: instream, into: "/usr/local/frc/bin/netconsole-host"
+                                            instream = DeployPlugin.class.getClassLoader().getResourceAsStream("netconsole/netconsole-host.properties")
+                                            put from: instream, into: "/usr/local/frc/bin/netconsole-host.properties"
+                                            execute "chmod +x /usr/local/frc/bin/netconsole-host /usr/local/frc/bin/netconsole-host.properties"
+
+                                            execute "ldconfig"
+                                        }
                                         session(host: spec.getActiveRioAddress().address, user: 'lvuser', timeoutSec: spec.getDeployTimeout(), knownHosts: AllowAnyHosts.instance) {
                                             execute ". /etc/profile.d/natinst-path.sh; /usr/local/frc/bin/frcKillRobot.sh -t", ignoreError: true // Just in case
                                             execute "mkdir -p ${spec.getDeployDirectory()}"
                                             put from: file, into: spec.getDeployDirectory()
                                             execute "chmod +x ${spec.getDeployDirectory()}/${file.name}"
                                             execute "sync"
+                                            execute ". /etc/profile.d/natinst-path.sh; /usr/local/frc/bin/frcKillRobot.sh -t -r", ignoreError: true     // Restart Code
                                         }
                                     }
                             }
