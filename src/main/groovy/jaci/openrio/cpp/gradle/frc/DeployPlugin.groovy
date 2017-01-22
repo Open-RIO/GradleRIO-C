@@ -178,7 +178,7 @@ class DeployPlugin implements Plugin<Project> {
                             projectWrapper.project.tasks.getByName("deploy").dependsOn(it)
                             dependsOn(projectWrapper.project.tasks.getByName("determine_rio_address"))
                             doLast {
-                                if (file.exists())
+                                if (file.exists()) {
                                     projectWrapper.project.deploy_ssh.run {
                                         session(host: spec.getActiveRioAddress().address, user: 'admin', timeoutSec: spec.getDeployTimeout(), knownHosts: AllowAnyHosts.instance) {
                                             def dir = "${projectWrapper.project.buildDir}/dependencies/wpi"
@@ -218,6 +218,7 @@ class DeployPlugin implements Plugin<Project> {
                                                 }
                                             }
                                             
+                                            execute "killall -q netconsole-host 2> /dev/null || :", ignoreError: true       // Kill netconsole
                                             def instream = DeployPlugin.class.getClassLoader().getResourceAsStream("netconsole/netconsole-host")
                                             put from: instream, into: "/usr/local/frc/bin/netconsole-host"
                                             instream = DeployPlugin.class.getClassLoader().getResourceAsStream("netconsole/netconsole-host.properties")
@@ -227,7 +228,7 @@ class DeployPlugin implements Plugin<Project> {
                                             execute "ldconfig"
                                         }
                                         session(host: spec.getActiveRioAddress().address, user: 'lvuser', timeoutSec: spec.getDeployTimeout(), knownHosts: AllowAnyHosts.instance) {
-                                            execute ". /etc/profile.d/natinst-path.sh; /usr/local/frc/bin/frcKillRobot.sh -t", ignoreError: true // Just in case
+                                            execute ". /etc/profile.d/natinst-path.sh; /usr/local/frc/bin/frcKillRobot.sh -t 2> /dev/null", ignoreError: true        // Kill user code
                                             execute "mkdir -p ${spec.getDeployDirectory()}"
                                             put from: file, into: spec.getDeployDirectory()
                                             execute "chmod +x ${spec.getDeployDirectory()}/${file.name}"
@@ -235,6 +236,7 @@ class DeployPlugin implements Plugin<Project> {
                                             execute ". /etc/profile.d/natinst-path.sh; /usr/local/frc/bin/frcKillRobot.sh -t -r", ignoreError: true     // Restart Code
                                         }
                                     }
+                                }
                             }
                         }
                     }
