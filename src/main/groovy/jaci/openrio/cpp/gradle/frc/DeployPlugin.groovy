@@ -17,6 +17,10 @@ class ProjectWrapper {
 
 class DeployPlugin implements Plugin<Project> {
 
+    def robotCommand = { spec, filename ->
+        "/usr/local/frc/bin/netconsole-host bash -c 'cd ${spec.getDeployDirectory()} && ./${filename} ${spec.getRunArguments()}'"
+    }
+
     void apply(Project project) {
         project.getPluginManager().apply(ComponentModelBasePlugin.class)
         project.extensions.create('deploy_project_wrapper', ProjectWrapper)
@@ -125,40 +129,6 @@ class DeployPlugin implements Plugin<Project> {
                     }
                 }
             }
-
-            if (spec.getRobotCommand() != "" && spec.getRobotCommand() != null) {
-                createRobotCommandTask(spec.getRobotCommand(), projectWrapper, spec)
-            }
-        }
-
-        @Mutate
-        void addRobotCommandTask(ComponentSpecContainer container, final ExtensionContainer extensions, @Path("frc") FRCSpec spec) {
-            if (spec.getRobotCommand() == "") {
-                def done = false
-                container.withType(FRCUserProgram) {
-                    if (!done) createRobotCommandTask("/usr/local/frc/bin/netconsole-host bash -c 'cd ${spec.getDeployDirectory()} && ./${it.name} ${spec.getRunArguments()}'", extensions.getByType(ProjectWrapper), spec)
-                    done = true
-                }
-            }
-        }
-
-        static void createRobotCommandTask(String command, ProjectWrapper projectWrapper, FRCSpec spec) {
-            projectWrapper.project.task("deploy_robotcommand") {
-                group "GradleRIO"
-                description "Set the RobotCommand on the RoboRIO to launch the User Program"
-                projectWrapper.project.tasks.getByName("deploy").dependsOn(it)
-                dependsOn(projectWrapper.project.tasks.getByName("determine_rio_address"))
-                doLast {
-                    def rc_local = new File(projectWrapper.project.buildDir, "robotCommand")
-                    rc_local.write("${command}\n")
-                     projectWrapper.project.deploy_ssh.run {
-                        session(host: spec.getActiveRioAddress().address, user: 'lvuser', timeoutSec: spec.getDeployTimeout(), knownHosts: AllowAnyHosts.instance) {
-                            put from: rc_local, into: "/home/lvuser"
-                            execute "chmod +x /home/lvuser/robotCommand"
-                        }
-                     }
-                }
-            }
         }
 
         @Mutate
@@ -227,11 +197,29 @@ class DeployPlugin implements Plugin<Project> {
 
                                             execute "ldconfig"
                                         }
+
                                         session(host: spec.getActiveRioAddress().address, user: 'lvuser', timeoutSec: spec.getDeployTimeout(), knownHosts: AllowAnyHosts.instance) {
                                             execute ". /etc/profile.d/natinst-path.sh; /usr/local/frc/bin/frcKillRobot.sh -t 2> /dev/null", ignoreError: true        // Kill user code
                                             execute "mkdir -p ${spec.getDeployDirectory()}"
+                                            execute "rm -f ${spec.getDeployDirectory()}/${file.name} 2> /dev/null", ignoreError: true
                                             put from: file, into: spec.getDeployDirectory()
                                             execute "chmod +x ${spec.getDeployDirectory()}/${file.name}"
+
+                                            if (project.frc.robotCommand != null) {
+                                                def cmd = ""
+                                                if (project.frc.robotCommand == "") {
+                                                    cmd = robotCommand(project.frc, file.name)
+                                                } else {
+                                                    cmd = project.frc.robotCommand
+                                                }
+                                                def rc_local = new File(project.buildDir, "robotCommand")
+                                                rc_local.write("${cmd}\n")
+                                                put from: rc_local, into: "/home/lvuser"
+                                                execute "chmod +x /home/lvuser/robotCommand"
+                                            }
+
+                                            execute "setcap 'cap_sys_nice=pe' ${spec.getDeployDirectory()}/${file.name}"
+
                                             execute "sync"
                                             execute ". /etc/profile.d/natinst-path.sh; /usr/local/frc/bin/frcKillRobot.sh -t -r", ignoreError: true     // Restart Code
                                         }
