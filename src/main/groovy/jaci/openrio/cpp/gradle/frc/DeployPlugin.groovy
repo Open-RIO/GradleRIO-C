@@ -205,12 +205,12 @@ class DeployPlugin implements Plugin<Project> {
                                             put from: file, into: spec.getDeployDirectory()
                                             execute "chmod +x ${spec.getDeployDirectory()}/${file.name}"
 
-                                            if (project.frc.robotCommand != null) {
+                                            if (spec.robotCommand != null) {
                                                 def cmd = ""
-                                                if (project.frc.robotCommand == "") {
-                                                    cmd = robotCommand(project.frc, file.name)
+                                                if (spec.robotCommand == "") {
+                                                    cmd = robotCommand(spec, file.name)
                                                 } else {
-                                                    cmd = project.frc.robotCommand
+                                                    cmd = spec.robotCommand
                                                 }
                                                 def rc_local = new File(project.buildDir, "robotCommand")
                                                 rc_local.write("${cmd}\n")
