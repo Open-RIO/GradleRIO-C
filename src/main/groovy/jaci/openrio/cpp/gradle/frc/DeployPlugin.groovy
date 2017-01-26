@@ -17,10 +17,6 @@ class ProjectWrapper {
 
 class DeployPlugin implements Plugin<Project> {
 
-    def robotCommand = { spec, filename ->
-        "/usr/local/frc/bin/netconsole-host bash -c 'cd ${spec.getDeployDirectory()} && ./${filename} ${spec.getRunArguments()}'"
-    }
-
     void apply(Project project) {
         project.getPluginManager().apply(ComponentModelBasePlugin.class)
         project.extensions.create('deploy_project_wrapper', ProjectWrapper)
@@ -208,7 +204,7 @@ class DeployPlugin implements Plugin<Project> {
                                             if (spec.robotCommand != null) {
                                                 def cmd = ""
                                                 if (spec.robotCommand == "") {
-                                                    cmd = robotCommand(spec, file.name)
+                                                    cmd = "/usr/local/frc/bin/netconsole-host bash -c 'cd ${spec.getDeployDirectory()} && ./${file.name} ${spec.getRunArguments()}'"
                                                 } else {
                                                     cmd = spec.robotCommand
                                                 }
