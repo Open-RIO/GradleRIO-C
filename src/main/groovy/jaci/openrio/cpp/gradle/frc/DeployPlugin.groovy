@@ -214,10 +214,12 @@ class DeployPlugin implements Plugin<Project> {
                                                 execute "chmod +x /home/lvuser/robotCommand"
                                             }
 
-                                            execute "setcap 'cap_sys_nice=pe' ${spec.getDeployDirectory()}/${file.name}"
-
                                             execute "sync"
                                             execute ". /etc/profile.d/natinst-path.sh; /usr/local/frc/bin/frcKillRobot.sh -t -r", ignoreError: true     // Restart Code
+                                        }
+
+                                        session(host: spec.getActiveRioAddress().address, user: 'admin', timeoutSec: spec.getDeployTimeout(), knownHosts: AllowAnyHosts.instance) {
+                                            execute "setcap 'cap_sys_nice=pe' ${spec.getDeployDirectory()}/${file.name}"
                                         }
                                     }
                                 }
