@@ -14,6 +14,7 @@ import org.gradle.api.tasks.Delete;
 import jaci.openrio.cpp.gradle.xtoolchain.XToolchainPlugin;
 import jaci.openrio.cpp.gradle.wpi.WPIPlugin;
 import jaci.openrio.cpp.gradle.frc.DeployPlugin;
+import jaci.openrio.cpp.gradle.ide.CLionPlugin;
 import org.gradle.internal.os.OperatingSystem;
 
 import jaci.openrio.cpp.gradle.resource.*
@@ -25,6 +26,7 @@ class GradleRIO_C implements Plugin<Project> {
         project.getPluginManager().apply(XToolchainPlugin.class)
         project.getPluginManager().apply(WPIPlugin.class)
         project.getPluginManager().apply(DeployPlugin.class)
+        project.getPluginManager().apply(CLionPlugin.class)
     }
 
     // ~/.gradle

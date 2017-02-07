@@ -10,6 +10,9 @@ _Replace `gradlew` with `./gradlew` if you're on Mac or Linux_
 `gradlew build` will build your FRC Code  
 `gradlew build deploy` will build and deploy your FRC Code. Can also be run without build as `gradlew deploy`  
 `gradlew restart_rio_code` will restart user code running on the RoboRIO
+  
+`gradlew clion` will generate a CMakeLists.txt file for the Clion IDE. When running, make sure you're using the `<project>-build` or `<project>-debug` configuration, not `fake-<project>`.  
+`gradlew cleanClion` will delete all Clion associated files (e.g. CMakeLists.txt, .idea and cmake-build-debug)  
 
 Run `gradlew tasks --all` for more information.
 
