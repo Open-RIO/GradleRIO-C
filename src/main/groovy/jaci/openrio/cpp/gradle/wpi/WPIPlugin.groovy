@@ -106,7 +106,7 @@ class WPIPlugin implements Plugin<Project> {
             libs.create("talonSrx") {
                 headers.srcDir "${project.buildDir}/dependencies/third/Toolsuite/cpp/include"
                 binaries.withType(StaticLibraryBinary) {
-                    staticLibraryFile = new File("${project.buildDir}/dependencies/third/Toolsuite/cpp/lib/libTalonSRXLib.a")
+                    staticLibraryFile = new File("${project.buildDir}/dependencies/third/Toolsuite/cpp/lib/libCTRLib.a")
                 }
             }
         }
