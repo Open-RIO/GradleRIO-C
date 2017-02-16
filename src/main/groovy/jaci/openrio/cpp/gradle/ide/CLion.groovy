@@ -16,8 +16,8 @@ class CLionExtension {
 }
 
 class CLionPlugin implements Plugin<Project> {
-    def relative = { base, file ->
-        java.nio.file.Paths.get(base.path).relativize(java.nio.file.Paths.get(file.path))
+    String relative(File base, File file) {
+        return java.nio.file.Paths.get(base.path).relativize(java.nio.file.Paths.get(file.path)).toString().replaceAll("\\\\", "/")
     }
 
     void apply(Project project) {

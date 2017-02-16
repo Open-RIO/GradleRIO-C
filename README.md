@@ -61,6 +61,8 @@ model {
                 source.srcDirs "src"                        // Where your .cpp files are stored
                 exportedHeaders.srcDirs "include"           // Where your .h / .hpp files are stored
                 lib library: "wpilib", linkage: "static"    // Compile with WPILib
+                lib library: "talonSrx", linkage: "static"  // Compile with TalonSrx (CTRLib)
+                lib library: "navx", linkage: "static"      // Compile with NavX
             }
         }
     }
@@ -106,23 +108,26 @@ model {
 
         // Maven is the default provider for the WPILib library
         mavenBranch = "development"         // Set which branch of the WPILib Maven to use. By default, this is 'release'
-        mavenWpilib = "2017.1.1-beta-3"     // Set which version of WPILib to use from the Maven. By default, this is '+' (latest release)
-        mavenHal    = "2017.1.1-beta-3"     // Set which version of the HAL to use from the Maven. By default, this is the same as mavenWpilib
-        mavenWpiutil = "1.0.2"              // Set which version of WPIUtil to use from the Maven. By default, this is '+' (latest release)
-        mavenNtcore = "3.1.2"               // Set which version of NTCore to use from the Maven. By default, this is '+' (latest release)
-        mavenCscore = "0.9.1-beta-3"        // Set which version of CSCore to use from the Maven. By default, this is '+' (latest release)
+        wpilibVersion = "2017.1.1-beta-3"     // Set which version of WPILib to use from the Maven. By default, this is '+' (latest release)
+        halVersion    = "2017.1.1-beta-3"     // Set which version of the HAL to use from the Maven. By default, this is the same as mavenWpilib
+        wpiutilVersion = "1.0.2"              // Set which version of WPIUtil to use from the Maven. By default, this is '+' (latest release)
+        ntcoreVersion = "3.1.2"               // Set which version of NTCore to use from the Maven. By default, this is '+' (latest release)
+        cscoreVersion = "0.9.1-beta-3"        // Set which version of CSCore to use from the Maven. By default, this is '+' (latest release)
+        
+        talonSrxVersion = "4.4.1.9"         // Set which version of CTRLib (Talon SRX) to use from the maven. By default, this is '+' (latest release)
+        navxVersion = "3.0.323"             // Set which version of NavX to use from the maven. By default, this is '+' (latest version)
     }
 
-    // Use this block to add libraries that have been prebuilt (i.e. device libraries like NavX, or other code)
+    // Use this block to add libraries that have been prebuilt (i.e. device libraries, or other code)
     // If you're building a library from source, it is better to add that as a dependency or as another component.
     // If the library uses GradleRIO, use the multi_project example. If it doesn't, you can add the sources as shown
     // in the custom_library example. 
     // This block is optional.
     libraries {
-        navx(LibraryPrebuilt) {
-            headers "navx/include"
-            staticFile "navx/navx.a"
-            sharedFile "navx/navx.so"
+        some_lib(LibraryPrebuilt) {
+            headers "some_lib/include"
+            staticFile "some_lib/some_lib.a"
+            sharedFile "some_lib/some_lib.so"
         }
     }
 
@@ -138,7 +143,10 @@ model {
                     srcDirs "include"           // Where your .h/.hpp files are stored
                 }
                 lib library: "wpilib", linkage: "static"    // Compile with WPILib
-                lib library: "navx", linkage: "static"      // From our libraries {} block
+                lib library: "talonSrx", linkage: "static"  // Compile with TalonSrx
+                lib library: "navx", linkage: "static"      // Compile with NavX
+
+                lib library: "some_lib", linkage: "static"  // From our libraries {} block
             }
         }
     }

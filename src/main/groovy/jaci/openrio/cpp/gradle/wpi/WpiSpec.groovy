@@ -26,4 +26,7 @@ public interface WpiSpec {
 
     String getTalonSrxVersion()
     void setTalonSrxVersion(String version)
+
+    String getNavxVersion()
+    void setNavxVersion(String version)
 }

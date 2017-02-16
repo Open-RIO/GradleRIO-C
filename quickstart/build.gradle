@@ -1,5 +1,5 @@
 plugins {
-    id "jaci.openrio.cpp.gradle.GradleRIO-C" version "latest-version"
+    id "jaci.openrio.cpp.gradle.GradleRIO-C" version "2017.3.0"
 }
 apply plugin: "cpp"
 
@@ -14,6 +14,8 @@ model {
                 source.srcDirs "src"                        // Where your .cpp files are stored
                 exportedHeaders.srcDirs "include"           // Where your .h / .hpp files are stored
                 lib library: "wpilib", linkage: "static"    // Compile with WPILib
+                lib library: "talonSrx", linkage: "static"  // Compile with CTRLib (Talon SRX)
+                lib library: "navx", linkage: "static"      // Compile with NavX
             }
         }
     }

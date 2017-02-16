@@ -47,6 +47,7 @@ class WPIPlugin implements Plugin<Project> {
             spec.setNtcoreVersion("+")
             spec.setCscoreVersion("+")
             spec.setTalonSrxVersion("+")
+            spec.setNavxVersion("+")
         }
 
         @Mutate
@@ -75,6 +76,7 @@ class WPIPlugin implements Plugin<Project> {
             project.dependencies.add("wpi_maven", "edu.wpi.cscore.cpp:cscore:${wpiSpec.getCscoreVersion()}:athena-uberzip@zip")
             
             project.dependencies.add("third_party", "thirdparty.frc.ctre:Toolsuite-Zip:${wpiSpec.getTalonSrxVersion()}@zip")
+            project.dependencies.add("third_party", "thirdparty.frc.kauai:Navx-Zip:${wpiSpec.getNavxVersion()}@zip")
 
             def dltask = []
             project.getConfigurations().wpi_maven.files.each { file ->
@@ -107,6 +109,13 @@ class WPIPlugin implements Plugin<Project> {
                 headers.srcDir "${project.buildDir}/dependencies/third/Toolsuite/cpp/include"
                 binaries.withType(StaticLibraryBinary) {
                     staticLibraryFile = new File("${project.buildDir}/dependencies/third/Toolsuite/cpp/lib/libCTRLib.a")
+                }
+            }
+
+            libs.create("navx") {
+                headers.srcDir "${project.buildDir}/dependencies/third/Navx/roborio/cpp/include"
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = new File("${project.buildDir}/dependencies/third/Navx/roborio/cpp/lib/libnavx_frc_cpp.a")
                 }
             }
         }
