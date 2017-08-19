@@ -141,11 +141,15 @@ class WPIPlugin implements Plugin<Project> {
                     dependsOn project.download_wpi
                     binary.linker.args << "-L${project.buildDir}/dependencies/wpi/Linux/arm".toString()
                     binary.linker.args << "-L${libSearchPath}".toString()
+                    binary.linker.args << "-lntcore"
+                    binary.linker.args << "-lFRC_NetworkCommunication"
                 }
                 tasks.withType(CppCompile) {
                     dependsOn project.download_wpi
                     binary.linker.args << "-L${project.buildDir}/dependencies/wpi/Linux/arm".toString()
                     binary.linker.args << "-L${libSearchPath}".toString()
+                    binary.linker.args << "-lntcore"
+                    binary.linker.args << "-lFRC_NetworkCommunication"
                 }
             }
         }
