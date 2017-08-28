@@ -1,5 +1,5 @@
 plugins {
-    id "com.gradle.plugin-publish" version "0.9.5"
+    id "com.gradle.plugin-publish" version "0.9.7"
 }
 
 apply plugin: 'groovy'
@@ -64,6 +64,7 @@ build.dependsOn zipQuickstart
 
 // Release both plugin and build other projects
 task fullRelease() {
+    dependsOn build
     dependsOn publishPlugins
     dependsOn zipQuickstart
 }
