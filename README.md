@@ -3,6 +3,7 @@
 ## NOTE: GradleRIO-C is now a part of GradleRIO
 GradleRIO now has both Java and Native (C,C++) support in the [root repository](https://github.com/Open-RIO/GradleRIO). This repository is discontinued.
 
+------
 Managing FRC C++ Projects, the Gradle way. Build, Develop and Deploy your FRC Code on any system, without the need for eclipse or administrative priviledges.
 
 Unlike the standard FRC Development Tools, GradleRIO-C can be run on any system, even if they're locked down (like school PCs). This includes installing
